@@ -1,0 +1,229 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>P.S.M World School — Report Card Generator</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="toolbar no-print">
+    <div>
+      <h1>Report Card Generator</h1>
+      <p class="sub">P.S.M World School — offline, runs entirely in this browser. No internet or server needed.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Import data</h2>
+      <label class="file-drop">
+        <input id="fileInput" type="file" accept=".xlsx,.xls" />
+        📄 Click to choose your filled <strong>template.xlsx</strong>
+      </label>
+      <div id="statusLine" class="status-line" style="display:none;"></div>
+      <a class="btn btn-ghost" style="margin-top:10px;" href="template.xlsx" download>⬇ Download blank template.xlsx</a>
+    </div>
+
+    <div class="card">
+      <h2>2. Find students</h2>
+      <input id="searchBox" class="search-box" type="text" placeholder="Search by name or admission no." />
+      <div class="class-filter">
+        <button data-cls="ALL" class="active">All</button>
+        <button data-cls="IX">Class IX</button>
+        <button data-cls="X">Class X</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:12px; color:#5b6470;">Students</span>
+        <span id="countBadge" class="count-badge">0 / 0</span>
+      </div>
+      <ul id="studentList" class="student-list"></ul>
+      <p id="emptyHint" class="empty-hint">No data yet — import an Excel file above to get started.</p>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="selectAllBtn" class="btn btn-ghost" style="flex:1;">Select visible</button>
+        <button id="clearBtn" class="btn btn-ghost" style="flex:1;">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Print</h2>
+      <button id="printBtn" class="btn btn-primary" disabled>🖨 Print selected</button>
+      <button id="printAllBtn" class="btn btn-secondary" style="margin-top:8px;" disabled>🖨 Print entire class</button>
+      <p class="empty-hint" style="margin-bottom:0;">Each student prints on its own A4 page. Use your browser's Print dialog to save as PDF instead of printing on paper.</p>
+    </div>
+  </aside>
+
+  <main class="stage" id="stageWrapper">
+    <div class="stage-toolbar no-print">
+      <span class="count">Preview</span>
+    </div>
+    <div id="stage"></div>
+  </main>
+
+</div>
+
+<script src="lib/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html> -->
+
+<!-- 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>P.S.M World School — Report Card Generator</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="toolbar no-print">
+    <div>
+      <h1>Report Card Generator</h1>
+      <p class="sub">P.S.M World School — offline, runs entirely in this browser. No internet or server needed.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Import data</h2>
+      <label class="file-drop">
+        <input id="fileInput" type="file" accept=".xlsx,.xls" />
+        <span class="file-drop-icon">📄</span>
+        <span>Click to choose your filled <strong>template.xlsx</strong></span>
+      </label>
+      <div id="statusLine" class="status-line" style="display:none;"></div>
+      <a class="btn btn-ghost" style="margin-top:10px;" href="template.xlsx" download>⬇ Download blank template.xlsx</a>
+    </div>
+
+    <div class="card">
+      <h2>2. Academic session</h2>
+      <label class="field-label" for="sessionInput">Session shown on every card</label>
+      <input id="sessionInput" class="text-input" type="text" placeholder="e.g. 2026-2027" />
+      <p class="field-hint">Leave blank to use each student's own "Session" column from the Excel file instead.</p>
+    </div>
+
+    <div class="card">
+      <h2>3. Find students</h2>
+      <input id="searchBox" class="search-box" type="text" placeholder="Search by name or admission no." />
+      <div class="class-filter">
+        <button data-cls="ALL" class="active">All</button>
+        <button data-cls="IX">Class IX</button>
+        <button data-cls="X">Class X</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:12px; color:#5b6470;">Students</span>
+        <span id="countBadge" class="count-badge">0 / 0</span>
+      </div>
+      <ul id="studentList" class="student-list"></ul>
+      <p id="emptyHint" class="empty-hint">No data yet — import an Excel file above to get started.</p>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="selectAllBtn" class="btn btn-ghost" style="flex:1;">Select visible</button>
+        <button id="clearBtn" class="btn btn-ghost" style="flex:1;">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4. Print</h2>
+      <button id="printBtn" class="btn btn-primary" disabled>🖨 Print selected</button>
+      <button id="printAllBtn" class="btn btn-secondary" style="margin-top:8px;" disabled>🖨 Print entire class</button>
+      <p class="empty-hint" style="margin-bottom:0;">Each student prints on its own A4 page. Use your browser's Print dialog to save as PDF instead of printing on paper.</p>
+    </div>
+  </aside>
+
+  <main class="stage" id="stageWrapper">
+    <div class="stage-toolbar no-print">
+      <span class="count">Preview</span>
+    </div>
+    <div id="stage"></div>
+  </main>
+
+</div>
+
+<script src="lib/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
+ -->
+
+ <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>P.S.M World School — Report Card Generator</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="toolbar no-print">
+    <div>
+      <h1>Report Card Generator</h1>
+      <p class="sub">P.S.M World School — offline, runs entirely in this browser. No internet or server needed.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Class group</h2>
+      <div class="class-filter" id="templateToggle">
+        <button data-tpl="ixx" class="active">Class IX – X</button>
+        <button data-tpl="iii_viii">Class III – VIII</button>
+      </div>
+      <p class="field-hint">Picks which report-card format is used. The list below only shows students from this group, and only this layout prints.</p>
+    </div>
+
+    <div class="card">
+      <h2>2. Import data</h2>
+      <label class="file-drop">
+        <input id="fileInput" type="file" accept=".xlsx,.xls" />
+        <span class="file-drop-icon">📄</span>
+        <span>Click to choose your filled <strong>template.xlsx</strong></span>
+      </label>
+      <div id="statusLine" class="status-line" style="display:none;"></div>
+      <a class="btn btn-ghost" style="margin-top:10px;" href="template.xlsx" download>⬇ Download blank template.xlsx</a>
+    </div>
+
+    <div class="card">
+      <h2>3. Academic session</h2>
+      <label class="field-label" for="sessionInput">Session shown on every card</label>
+      <input id="sessionInput" class="text-input" type="text" placeholder="e.g. 2026-2027" />
+      <p class="field-hint">Leave blank to use each student's own "Session" column from the Excel file instead.</p>
+    </div>
+
+    <div class="card">
+      <h2>4. Find students</h2>
+      <input id="searchBox" class="search-box" type="text" placeholder="Search by name or admission no." />
+      <div class="class-filter" id="classFilterButtons"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:12px; color:#5b6470;">Students</span>
+        <span id="countBadge" class="count-badge">0 / 0</span>
+      </div>
+      <ul id="studentList" class="student-list"></ul>
+      <p id="emptyHint" class="empty-hint">No data yet — import an Excel file above to get started.</p>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="selectAllBtn" class="btn btn-ghost" style="flex:1;">Select visible</button>
+        <button id="clearBtn" class="btn btn-ghost" style="flex:1;">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>5. Print</h2>
+      <button id="printBtn" class="btn btn-primary" disabled>🖨 Print selected</button>
+      <button id="printAllBtn" class="btn btn-secondary" style="margin-top:8px;" disabled>🖨 Print entire class</button>
+      <p class="empty-hint" style="margin-bottom:0;">Each student prints on its own A4 page. Use your browser's Print dialog to save as PDF instead of printing on paper.</p>
+    </div>
+  </aside>
+
+  <main class="stage" id="stageWrapper">
+    <div class="stage-toolbar no-print">
+      <span class="count">Preview</span>
+    </div>
+    <div id="stage"></div>
+  </main>
+
+</div>
+
+<script src="lib/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

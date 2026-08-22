@@ -50,7 +50,142 @@ const WORK_ART_HEALTH = [
   ["ArtEducation", "Art Education (Visual & Performing Art)"],
   ["HealthPhysicalEducation", "Health & Physical Education"],
 ];
+/* ---------------- Play & Nur–II: grade-entry data (no marks/totals) ---------------- */
 
+const PLAY_SUBJECTS = [
+  ["OralEnglish", "Oral English"], ["EnglishRhymes", "English Rhymes"], ["WrittenEnglish", "Written English"],
+  ["OralHindi", "Oral Hindi"], ["HindiRhymes", "Hindi Rhymes"], ["WrittenHindi", "Written Hindi"],
+  ["OralMaths", "Oral Maths"], ["MathsActivity", "Maths Activity"], ["WrittenMaths", "Written Maths"],
+  ["Drawing", "Drawing"], ["LanguageDevelopment", "Language Development"],
+];
+const PLAY_COSCHOLASTIC = [
+  ["Sports", "Sports"], ["StagePerformance", "Stage Performance"],
+  ["Recitation", "Recitation"], ["DanceLevel", "Dance & Level"],
+];
+const PLAY_TEACHER_EVAL = [
+  ["Curiosity", "Curiosity"], ["Conduct", "Conduct"], ["Cooperation", "Co-operation"],
+  ["CourtesyPoliteness", "Courtesy & politeness"], ["Adjustment", "Adjustment"], ["Obedience", "Obedience"],
+  ["Expression", "Expression"], ["Neatness", "Neatness"], ["Activity", "Activity"],
+];
+
+const NUR_SCHOLASTIC = [
+  { subject: "ENGLISH", key: "Eng", items: [
+    ["ReadingSkills", "Reading Skills"], ["PronunciationFluency", "Pronunciation/Fluency"],
+    ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
+    ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
+    ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
+  ]},
+  { subject: "HINDI", key: "Hin", items: [
+    ["ReadingSkills", "Reading Skills"], ["PronunciationFluency", "Pronunciation/Fluency"],
+    ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
+    ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
+    ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
+  ]},
+  { subject: "MATHS", key: "Ma", items: [
+    ["RecognitionNumbersMentalAbility", "Recognition of Numbers/Mental Ability"],
+    ["OralCountingTablesReasoning", "Oral Counting/Tables/Reasoning skills"],
+    ["PreNumberConceptsApplication", "Pre Number Concepts/ application"],
+    ["ConceptRelatedExercise", "Concept Related Exercise"],
+    ["WrittenEvaluation", "Written Evaluation"], ["Assignments", "Assignments"],
+  ]},
+  { subject: "E.V.S", key: "Evs", items: [
+    ["EnvironmentSensitivity", "Environment Sensitivity"], ["GroupDiscussions", "Group Discussions"],
+    ["ConceptualUnderstanding", "Conceptual Understanding"],
+    ["Assignments", "Assignments"], ["WrittenEvaluation", "Written Evaluation"],
+  ]},
+];
+const NUR_COSCHOLASTIC = [
+  ["Computer", "Computer"], ["ArtCraft", "Art & Craft"], ["GeneralKnowledge", "General Knowledge"],
+  ["MoralValues", "Moral Values"], ["MusicDance", "Music & Dance"], ["Sports", "Sports"],
+];
+const NUR_PERSONAL_TRAITS = [
+  ["Discipline", "Discipline"], ["Confidence", "Confidence"],
+  ["RegularityPunctuality", "Regularity & Punctuality"], ["AcceptResponsibility", "Accept Responsibility"],
+  ["CleanlinessHygiene", "Cleanliness & Hygiene"], ["RegularityHW", "Regularity in doing H.W"],
+  ["GreetingOther", "Greeting Other"], ["SharersWithOther", "Sharers with Other"],
+  ["FollowInstructions", "Follow Instructions"], ["ParticipateActivities", "Participate in Activities"],
+];
+
+/* Generic N-column grade table (replaces the fixed 2-col assumption of
+   miniTableForStudent for these two new formats; miniTableForStudent is
+   untouched so IX-X and III-VIII keep working exactly as before). */
+function evalTable(student, items, headerLabel, suffixes, colLabels, paddingClass = "") {
+  const headCells = colLabels.map((c) => `<th>${escapeHtml(c)}</th>`).join("");
+  const rows = items.map(([key, label]) => {
+    const cells = suffixes.map((sfx) => `<td class="val ${paddingClass}">${escapeHtml(student[`${key}_${sfx}`])}</td>`).join("");
+    return `<tr><td class="label ${paddingClass}">${escapeHtml(label)}</td>${cells}</tr>`;
+  }).join("");
+  return `<table class="rc-mini">
+    <tr><th class="label ${paddingClass}">${escapeHtml(headerLabel)}</th>${headCells}</tr>
+    ${rows}
+  </table>`;
+}
+
+/* Student-info block without Phone/Vision/Teeth/Oral Hygiene, with a single
+   combined Height/Weight field — matches the Play and Nur–II cards exactly.
+   buildStudentInfo() (the full version) is untouched for IX-X / III-VIII. */
+function buildStudentInfoBasic(student) {
+  return `
+    <div class="rc-body-box">
+    <div class="rc-info">
+      <div class="rc-info-row">
+        <div class="field"><span class="lbl">Name of student</span><span class="val">${escapeHtml(student.Name)}</span></div>
+        <div class="field"><span class="lbl">Admission No.</span><span class="val">${escapeHtml(student.AdmissionNo)}</span></div>
+      </div>
+      <div class="rc-info-row">
+        <div class="field"><span class="lbl">Father's Name</span><span class="val">${escapeHtml(student.FatherName)}</span></div>
+        <div class="field"><span class="lbl">Mother's Name</span><span class="val">${escapeHtml(student.MotherName)}</span></div>
+      </div>
+      <div class="rc-info-row">
+        <div class="field"><span class="lbl">Date of Birth</span><span class="val">${escapeHtml(student.DOB)}</span></div>
+        <div class="field"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(student.BloodGroup)}</span></div>
+      </div>
+      <div class="rc-info-row">
+        <div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>
+      </div>
+      <div class="rc-info-row address">
+        <div class="field"><span class="lbl">Address</span><span class="val">${escapeHtml(student.Address)}</span></div>
+      </div>
+    </div>
+    <div class="rc-photo-box">Student<br/>Photo</div>
+    </div>`;
+}
+
+/* Grading key shared by Play and Nur–II (identical on both docs). */
+function gradingTableGrades() {
+  return `
+    <p class="rc-grading-title">Grading System</p>
+    <table class="rc-grading">
+      <tr><th class="row-label">Scholastic</th><th colspan="4"></th></tr>
+      <tr><td class="row-label">Grade</td><td>A</td><td>B</td><td>C</td><td>D</td></tr>
+      <tr><td class="row-label">Marks</td><td>81-100</td><td>61-80</td><td>41-60</td><td>33-40</td></tr>
+      <tr><th class="row-label">Co-Scholastic</th><th colspan="4"></th></tr>
+      <tr><td class="row-label">Grade</td><td>A</td><td>B</td><td>C</td><td></td></tr>
+      <tr><td class="row-label">Description</td><td>Appreciable</td><td>Satisfactory</td><td>Fair</td><td></td></tr>
+    </table>`;
+}
+
+// ADD (right after the existing gradingTableGrades() function)
+function gradingTableGradesSplit() {
+  return `
+    <p class="rc-grading-title">Grading System</p>
+    <div class="rc-two-col">
+      <div>
+        <table class="rc-grading">
+          <tr><th class="row-label">Scholastic</th><th colspan="4"></th></tr>
+          <tr><td class="row-label">Grade</td><td>A</td><td>B</td><td>C</td><td>D</td></tr>
+          <tr><td class="row-label">Marks</td><td>81-100</td><td>61-80</td><td>41-60</td><td>33-40</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="rc-grading">
+          <tr><th class="row-label">Co-Scholastic</th><th colspan="3"></th></tr>
+          <tr><td class="row-label">Grade</td><td>A</td><td>B</td><td>C</td></tr>
+          <tr><td class="row-label">Description</td><td>Appreciable</td><td>Satisfactory</td><td>Fair</td></tr>
+        </table>
+      </div>
+    </div>`;
+}
 function miniTable(items, headerLabel) {
   const rows = items.map(([key, label]) => `
     <tr><td class="label">${escapeHtml(label)}</td>
@@ -59,13 +194,13 @@ function miniTable(items, headerLabel) {
   return { rows, headerLabel };
 }
 
-function miniTableForStudent(student, items, headerLabel, term1Suffix, term2Suffix) {
+function miniTableForStudent(student, items, headerLabel, term1Suffix, term2Suffix, paddingClass = "") {
   const rows = items.map(([key, label]) => `
-    <tr><td class="label">${escapeHtml(label)}</td>
-      <td class="val">${escapeHtml(student[`${key}_${term1Suffix}`])}</td>
-      <td class="val">${escapeHtml(student[`${key}_${term2Suffix}`])}</td></tr>`).join("");
+    <tr><td class="label ${paddingClass}">${escapeHtml(label)}</td>
+      <td class="val ${paddingClass}">${escapeHtml(student[`${key}_${term1Suffix}`])}</td>
+      <td class="val ${paddingClass}">${escapeHtml(student[`${key}_${term2Suffix}`])}</td></tr>`).join("");
   return `<table class="rc-mini">
-    <tr><th class="label">${headerLabel}</th><th>TERM I</th><th>TERM II</th></tr>
+    <tr><th class="label ${paddingClass}">${headerLabel}</th><th class=" ${paddingClass}">TERM I</th><th class=" ${paddingClass}" >TERM II</th></tr>
     ${rows}
   </table>`;
 }
@@ -134,11 +269,30 @@ function signatureImg(src, alt) {
   return `<img class="sign-img" src="${src}" alt="${alt}" onerror="this.style.visibility='hidden'" />`;
 }
 
+// function buildSignatures() {
+//   return `
+//       <div class="rc-signatures">
+//         <div class="sign-block">
+//           ${signatureImg(SIGN_TEACHER_SRC, "Class Teacher signature")}
+//           <span class="sign-line">Class Teacher Sign.</span>
+//         </div>
+//         <div class="sign-block">
+//           ${signatureImg(SIGN_PRINCIPAL_SRC, "Principal signature")}
+//           <span class="sign-line">Principal Sign.</span>
+//         </div>
+//         <div class="sign-block">
+//           <span class="sign-img"></span>
+//           <span class="sign-line">Parent Sign.</span>
+//         </div>
+//       </div>`;
+// }
+
 function buildSignatures() {
+  const teacherSrc = teacherSignDataUrl || SIGN_TEACHER_SRC;
   return `
       <div class="rc-signatures">
         <div class="sign-block">
-          ${signatureImg(SIGN_TEACHER_SRC, "Class Teacher signature")}
+          ${signatureImg(teacherSrc, "Class Teacher signature")}
           <span class="sign-line">Class Teacher Sign.</span>
         </div>
         <div class="sign-block">
@@ -179,9 +333,9 @@ function subjectRowIXX(student, subj) {
   </tr>`;
 }
 
-function scholasticTableIXX(student) {
+function scholasticTableIXX(student, customClass="") {
   const rows = SUBJECTS_IXX.map((s) => subjectRowIXX(student, s)).join("");
-  return `<table class="rc-table">
+  return `<table class="rc-table ${customClass}">
     <thead>
       <tr>
         <th>SUBJECTS</th><th>P1<br>(80)</th><th>A<br>(5)</th><th>P2<br>(80)</th><th>B<br>(5)</th>
@@ -215,16 +369,16 @@ function reportCardHtmlIXX(student, session) {
     ${buildStudentInfo(student)}
     <div>
       <p class="rc-section-title">A. SCHOLASTIC AREA</p>
-      ${scholasticTableIXX(student)}
+      ${scholasticTableIXX(student, customClass = "scholasticTableIXX")}
     </div>
     <div class="rc-two-col">
       <div>
         <p class="rc-section-title">B. CO-SCHOLASTIC ACTIVITIES</p>
-        ${miniTableForStudent(student, PERSONAL_TRAITS, "ACTIVITIES", "T1", "T2")}
+        ${miniTableForStudent(student, PERSONAL_TRAITS, "ACTIVITIES", "T1", "T2", paddingClass = "py-5")}
       </div>
       <div>
         <p class="rc-section-title">HEALTH &amp; PHYSICAL EDUCATION</p>
-        ${miniTableForStudent(student, WORK_ART_HEALTH, "Activities", "T1", "T2")}
+        ${miniTableForStudent(student, WORK_ART_HEALTH, "Activities", "T1", "T2", paddingClass = "py-5")}
         <div class="rc-band">ATTENDANCE</div>
         <table class="rc-attendance">
           <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Attendance_T1)}</td></tr>
@@ -232,11 +386,13 @@ function reportCardHtmlIXX(student, session) {
         </table>
       </div>
     </div>
+    <div>
     <div class="rc-band">TEACHER'S REMARK</div>
     <table class="rc-remark">
       <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Remark_T1)}</td></tr>
       <tr><td class="term-label">TERM II</td><td>${escapeHtml(student.Remark_T2)}</td></tr>
     </table>
+    </div>
     </div>
     <div class="rc-footer">
       ${buildSignatures()}
@@ -353,22 +509,152 @@ function reportCardHtmlIIIVIII(student, session) {
   </section>`;
 }
 
+/* ---------------- Play template ---------------- */
+
+function scholasticTablePlay(student) {
+  const rows = PLAY_SUBJECTS.map(([k, label]) => `<tr>
+    <td class="subj-name">${escapeHtml(label)}</td>
+    <td>${escapeHtml(student[`${k}_T1`])}</td>
+    <td>${escapeHtml(student[`${k}_T2`])}</td>
+  </tr>`).join("");
+  return `<table class="rc-table">
+    <thead>
+      <tr><th rowspan="2">SUBJECTS</th><th colspan="2">TERMINAL EXAMINATION</th></tr>
+      <tr><th>TERM I</th><th>TERM II</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function reportCardHtmlPlay(student, session) {
+  const cls = escapeHtml(student.Class || "PLAY");
+  return `
+  <section class="sheet">
+    ${buildHeader(student, cls, session)}
+    <div class="rc-body">
+    ${buildStudentInfoBasic(student)}
+    <div>
+      <p class="rc-section-title">A. SCHOLASTIC AREA</p>
+      ${scholasticTablePlay(student)}
+    </div>
+    <div class="rc-two-col">
+      <div>
+        <p class="rc-section-title">B. ACTIVITIES</p>
+        ${evalTable(student, PLAY_COSCHOLASTIC, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"])}
+        <div class="rc-band">ATTENDANCE</div>
+        <table class="rc-attendance">
+          <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Attendance_T1)}</td></tr>
+          <tr><td class="term-label">TERM II</td><td>${escapeHtml(student.Attendance_T2)}</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="rc-section-title">C. CLASS TEACHER'S EVALUATION</p>
+        ${evalTable(student, PLAY_TEACHER_EVAL, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"])}
+      </div>
+    </div>
+    <div class="rc-band">TEACHER'S REMARK</div>
+    <table class="rc-remark">
+      <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Remark_T1)}</td></tr>
+      <tr><td class="term-label">TERM II</td><td>${escapeHtml(student.Remark_T2)}</td></tr>
+    </table>
+    </div>
+    <div class="rc-footer">
+      ${buildSignatures()}
+      ${gradingTableGrades()}
+    </div>
+  </section>`;
+}
+
+/* ---------------- Nur – II template ---------------- */
+
+function scholasticTableNur(student) {
+  const rows = NUR_SCHOLASTIC.flatMap((grp) =>
+    grp.items.map(([subKey, subLabel], idx) => {
+      const subjCell = idx === 0
+        ? `<td class="subj-name" rowspan="${grp.items.length}">${escapeHtml(grp.subject)}</td>`
+        : "";
+      return `<tr>${subjCell}
+        <td class="subj-sub">${escapeHtml(subLabel)}</td>
+        <td>${escapeHtml(student[`${grp.key}_${subKey}_E1`])}</td>
+        <td>${escapeHtml(student[`${grp.key}_${subKey}_E2`])}</td>
+        <td>${escapeHtml(student[`${grp.key}_${subKey}_E3`])}</td>
+      </tr>`;
+    })
+  ).join("");
+  return `<table class="rc-table rc-table-nur">
+    <thead>
+      <tr><th colspan="2">SUBJECTS</th><th>EVALUATION I</th><th>EVALUATION II</th><th>EVALUATION III</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function reportCardHtmlNur(student, session) {
+  const cls = escapeHtml(student.Class || "");
+  return `
+  <section class="sheet">
+    ${buildHeader(student, cls, session)}
+    <div class="rc-body">
+    ${buildStudentInfoBasic(student)}
+    <div>
+      <p class="rc-section-title">A. SCHOLASTIC AREA</p>
+      ${scholasticTableNur(student)}
+    </div>
+    <div class="rc-two-col">
+      <div>
+        <p class="rc-section-title">B. CO-SCHOLASTIC AREA</p>
+        ${evalTable(student, NUR_COSCHOLASTIC, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1")}
+         <div class="rc-band">ATTENDANCE</div>
+        <table class="rc-attendance">
+          <tr><td class="term-label py-3">TERM I</td><td class="py-3">${escapeHtml(student.Attendance_T1)}</td></tr>
+          <tr><td class="term-label py-3">TERM II</td><td class="py-3">${escapeHtml(student.Attendance_T2)}</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="rc-section-title">C. PERSONAL &amp; SOCIAL TRAITS</p>
+        ${evalTable(student, NUR_PERSONAL_TRAITS, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1")}
+       
+      </div>
+    </div>
+    <div class="">
+    <div class="rc-band">TEACHER'S REMARK</div>
+    <table class="rc-remark">
+      <tr><td class="term-label py-2">EVALUATION I</td><td class="py-2">${escapeHtml(student.Remark_E1)}</td></tr>
+      <tr><td class="term-label py-2">EVALUATION II</td><td class="py-2">${escapeHtml(student.Remark_E2)}</td></tr>
+      <tr><td class="term-label py-2">EVALUATION III</td><td class="py-2">${escapeHtml(student.Remark_E3)}</td></tr>
+    </table>
+    </div>
+    </div>
+    <div class="rc-footer">
+      ${buildSignatures()}
+      ${gradingTableGradesSplit()}
+    </div>
+  </section>`;
+}
+
 /* ---------------- Template registry ---------------- */
 
+// const TEMPLATES = {
+//   ixx: {
+//     label: "Class IX \u2013 X",
+//     classes: ["IX", "X"],
+//     render: reportCardHtmlIXX,
+//   },
+//   iii_viii: {
+//     label: "Class III \u2013 VIII",
+//     classes: ["III", "IV", "V", "VI", "VII", "VIII"],
+//     render: reportCardHtmlIIIVIII,
+//   },
+// };
 const TEMPLATES = {
-  ixx: {
-    label: "Class IX \u2013 X",
-    classes: ["IX", "X"],
-    render: reportCardHtmlIXX,
-  },
-  iii_viii: {
-    label: "Class III \u2013 VIII",
-    classes: ["III", "IV", "V", "VI", "VII", "VIII"],
-    render: reportCardHtmlIIIVIII,
-  },
+  play: { label: "Play", classes: ["PLAY"], render: reportCardHtmlPlay },
+  nur_ii: { label: "Nur \u2013 II", classes: ["NUR", "LKG", "UKG", "I", "II"], render: reportCardHtmlNur },
+  iii_viii: { label: "Class III \u2013 VIII", classes: ["III", "IV", "V", "VI", "VII", "VIII"], render: reportCardHtmlIIIVIII },
+  ixx: { label: "Class IX \u2013 X", classes: ["IX", "X"], render: reportCardHtmlIXX },
 };
 
-let activeTemplate = "ixx";
+let activeTemplate = "iii_viii";
+
 
 /* ---------------- Excel import ---------------- */
 
@@ -531,12 +817,37 @@ clearBtn.addEventListener("click", () => {
   renderStage();
 });
 
-printBtn.addEventListener("click", () => window.print());
+printBtn.addEventListener("click", () => {setPrintTitleForSelection();window.print()});
 printAllBtn.addEventListener("click", () => {
   allStudents.filter((s) => belongsToActiveTemplate(s)).forEach((s) => selectedIds.add(s.__id));
   renderList();
   renderStage();
-  setTimeout(() => window.print(), 200);
+  setTimeout(() => {setPrintTitleForSelection();window.print()}, 200);
+}); 
+
+// ADD (near printBtn/printAllBtn declarations)
+const ORIGINAL_TITLE = document.title;
+
+function setPrintTitleForSelection() {
+  const selected = allStudents.filter((s) => selectedIds.has(s.__id) && belongsToActiveTemplate(s));
+  const session = (sessionInput.value.trim() || selected[0]?.Session || "").replace(/[\\/:*?"<>|]/g, "-");
+  const tplLabel = TEMPLATES[activeTemplate].label.replace(/[\\/:*?"<>|]/g, "-");
+
+  let name;
+  if (selected.length === 1) {
+    const s = selected[0];
+    const admNo = String(s.AdmissionNo || "").trim();
+    name = `${s.Name || "Report Card"}${admNo ? " - " + admNo : ""}`;
+  } else if (selected.length > 1) {
+    name = `${tplLabel} Report Cards${session ? " - " + session : ""}`;
+  } else {
+    name = ORIGINAL_TITLE;
+  }
+  document.title = name.replace(/[\\/:*?"<>|]/g, "-").trim();
+}
+
+window.addEventListener("afterprint", () => {
+  document.title = ORIGINAL_TITLE;
 });
 
 /* ---------------- Report card rendering ---------------- */
@@ -555,6 +866,241 @@ function renderStage() {
     .join("");
 }
 
+
+
+/* ---------------- Teacher signature: upload + in-browser crop ---------------- */
+
+let teacherSignDataUrl = null;
+let cropImage = null;
+let cropRect = null;
+let cropDragging = false;
+let cropStart = null;
+
+const teacherSignInput = document.getElementById("teacherSignInput");
+const teacherSignPreviewWrap = document.getElementById("teacherSignPreviewWrap");
+const teacherSignPreview = document.getElementById("teacherSignPreview");
+const teacherSignRemoveBtn = document.getElementById("teacherSignRemoveBtn");
+const cropModal = document.getElementById("cropModal");
+const cropCanvas = document.getElementById("cropCanvas");
+const cropCtx = cropCanvas.getContext("2d");
+const cropCancelBtn = document.getElementById("cropCancelBtn");
+const cropConfirmBtn = document.getElementById("cropConfirmBtn");
+
+teacherSignInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const img = new Image();
+    img.onload = () => openCropModal(img);
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+  teacherSignInput.value = "";
+});
+
+function openCropModal(img) {
+  cropImage = img;
+  const maxW = 480, maxH = 420;
+  const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+  cropCanvas.width = Math.round(img.width * scale);
+  cropCanvas.height = Math.round(img.height * scale);
+  cropRect = null;
+  drawCrop();
+  cropModal.style.display = "flex";
+}
+
+function drawCrop() {
+  cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+  cropCtx.drawImage(cropImage, 0, 0, cropCanvas.width, cropCanvas.height);
+  if (cropRect) {
+    cropCtx.save();
+    cropCtx.strokeStyle = "#1f4e79";
+    cropCtx.lineWidth = 2;
+    cropCtx.setLineDash([6, 4]);
+    cropCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    cropCtx.restore();
+  }
+}
+
+function canvasPoint(e) {
+  const r = cropCanvas.getBoundingClientRect();
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { x: Math.max(0, Math.min(cropCanvas.width, cx)), y: Math.max(0, Math.min(cropCanvas.height, cy)) };
+}
+function cropPointerDown(e) {
+  cropDragging = true;
+  cropStart = canvasPoint(e);
+  cropRect = { x: cropStart.x, y: cropStart.y, w: 0, h: 0 };
+}
+function cropPointerMove(e) {
+  if (!cropDragging) return;
+  const p = canvasPoint(e);
+  cropRect = {
+    x: Math.min(cropStart.x, p.x), y: Math.min(cropStart.y, p.y),
+    w: Math.abs(p.x - cropStart.x), h: Math.abs(p.y - cropStart.y),
+  };
+  drawCrop();
+}
+function cropPointerUp() { cropDragging = false; }
+
+cropCanvas.addEventListener("mousedown", cropPointerDown);
+cropCanvas.addEventListener("mousemove", cropPointerMove);
+window.addEventListener("mouseup", cropPointerUp);
+cropCanvas.addEventListener("touchstart", cropPointerDown);
+cropCanvas.addEventListener("touchmove", cropPointerMove);
+window.addEventListener("touchend", cropPointerUp);
+
+cropCancelBtn.addEventListener("click", () => { cropModal.style.display = "none"; });
+
+cropConfirmBtn.addEventListener("click", () => {
+  if (!cropImage) return;
+  const scaleX = cropImage.width / cropCanvas.width;
+  const scaleY = cropImage.height / cropCanvas.height;
+  const useRect = (cropRect && cropRect.w > 4 && cropRect.h > 4)
+    ? cropRect
+    : { x: 0, y: 0, w: cropCanvas.width, h: cropCanvas.height };
+  const outW = Math.max(1, Math.round(useRect.w * scaleX));
+  const outH = Math.max(1, Math.round(useRect.h * scaleY));
+  const outCanvas = document.createElement("canvas");
+  outCanvas.width = outW;
+  outCanvas.height = outH;
+  outCanvas.getContext("2d").drawImage(
+    cropImage, useRect.x * scaleX, useRect.y * scaleY, outW, outH, 0, 0, outW, outH
+  );
+  teacherSignDataUrl = outCanvas.toDataURL("image/png");
+  teacherSignPreview.src = teacherSignDataUrl;
+  teacherSignPreviewWrap.style.display = "block";
+  cropModal.style.display = "none";
+  renderStage();
+});
+
+teacherSignRemoveBtn.addEventListener("click", () => {
+  teacherSignDataUrl = null;
+  teacherSignPreviewWrap.style.display = "none";
+  renderStage();
+});
+
+function detectBestTemplate(rows) {
+  let best = activeTemplate, bestCount = -1;
+  Object.keys(TEMPLATES).forEach((key) => {
+    const classes = TEMPLATES[key].classes;
+    const count = rows.filter((r) => classes.includes(String(r.Class || "").trim().toUpperCase())).length;
+    if (count > bestCount) { bestCount = count; best = key; }
+  });
+  return { best, bestCount };
+}
+
+function activateTemplate(key) {
+  activeTemplate = key;
+  templateToggle.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.tpl === key));
+  updateDownloadTemplateLabel();
+  classFilter = "ALL";
+  renderClassFilterButtons();
+}
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: "array" });
+      const sheetName = wb.SheetNames.includes("Students") ? "Students" : wb.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: "" });
+      if (!rows.length) throw new Error("No student rows found in the sheet.");
+      allStudents = rows.map((r, i) => ({ ...r, __id: i }));
+
+      const { best, bestCount } = detectBestTemplate(allStudents);
+      if (bestCount === 0) {
+        setStatus(`Loaded ${allStudents.length} student(s), but none match a known Class value for any group — check the "Class" column (e.g. PLAY, NUR, III, IX...).`, false);
+      } else if (best !== activeTemplate) {
+        activateTemplate(best);
+        setStatus(`Loaded ${allStudents.length} student(s) — switched to "${TEMPLATES[best].label}" based on the Class column.`, true);
+      } else {
+        setStatus(`Loaded ${allStudents.length} student${allStudents.length > 1 ? "s" : ""} from ${file.name}`, true);
+      }
+
+      selectedIds = new Set(allStudents.filter((s) => belongsToActiveTemplate(s)).map((s) => s.__id));
+      renderList();
+      renderStage();
+    } catch (err) {
+      setStatus("Could not read this file: " + err.message, false);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+templateToggle.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-tpl]");
+  if (!btn) return;
+  activateTemplate(btn.dataset.tpl);
+  selectedIds = new Set(allStudents.filter((s) => belongsToActiveTemplate(s)).map((s) => s.__id));
+  renderList();
+  renderStage();
+});
+
+const STUDENT_FIELDS_FULL = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "PhoneNo", "Address", "Height", "Weight", "BloodGroup", "Vision", "Teeth", "OralHygiene"];
+const STUDENT_FIELDS_BASIC = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "BloodGroup", "HeightWeight", "Address"];
+
+function templateColumns(key) {
+  let cols;
+  if (key === "ixx") {
+    cols = [...STUDENT_FIELDS_FULL];
+    SUBJECTS_IXX.forEach((s) => {
+      const k = s.replace(" ", "");
+      SUBJECT_FIELDS_IXX.forEach((f) => cols.push(`${k}_${f}`));
+    });
+    PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    WORK_ART_HEALTH.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
+  } else if (key === "iii_viii") {
+    cols = [...STUDENT_FIELDS_FULL];
+    SUBJECTS_III_VIII.forEach((s) => {
+      const k = s.replace(/[^A-Za-z]/g, "");
+      ["UT1", "UT2", "NB1", "SE1", "MidTerm", "UT3", "UT4", "NB2", "SE2", "AnnualExam"].forEach((f) => cols.push(`${k}_${f}`));
+    });
+    WORK_ART_HEALTH.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
+  } else if (key === "play") {
+    cols = [...STUDENT_FIELDS_BASIC];
+    PLAY_SUBJECTS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    PLAY_COSCHOLASTIC.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    PLAY_TEACHER_EVAL.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+   // NEW
+    cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
+    // cols.push("ExtraCurricular", "Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
+  } else if (key === "nur_ii") {
+    cols = [...STUDENT_FIELDS_BASIC];
+    NUR_SCHOLASTIC.forEach((grp) => grp.items.forEach(([subKey]) =>
+      cols.push(`${grp.key}_${subKey}_E1`, `${grp.key}_${subKey}_E2`, `${grp.key}_${subKey}_E3`)
+    ));
+    NUR_COSCHOLASTIC.forEach(([k]) => cols.push(`${k}_E1`, `${k}_E2`, `${k}_E3`));
+    NUR_PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_E1`, `${k}_E2`, `${k}_E3`));
+    cols.push("Attendance_T1", "Attendance_T2", "Remark_E1", "Remark_E2", "Remark_E3");
+  }
+  return cols;
+}
+
+const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+const downloadTemplateLabel = document.getElementById("downloadTemplateLabel");
+
+function updateDownloadTemplateLabel() {
+  downloadTemplateLabel.textContent = TEMPLATES[activeTemplate].label;
+}
+
+downloadTemplateBtn.addEventListener("click", () => {
+  const cols = templateColumns(activeTemplate);
+  const ws = XLSX.utils.aoa_to_sheet([cols]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Students");
+  XLSX.writeFile(wb, `template_${activeTemplate}.xlsx`);
+});
+
+updateDownloadTemplateLabel();
 renderClassFilterButtons();
 renderList();
 renderStage();

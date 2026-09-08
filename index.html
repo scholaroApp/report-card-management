@@ -1,3 +1,112 @@
+ <!-- <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>P.S.M World School — Report Card Generator</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="toolbar no-print">
+  <div>
+    <h1>Report Card Generator</h1>
+    <p class="sub">P.S.M World School — offline, runs entirely in this browser. No internet or server needed.</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Class group</h2>
+    <div class="class-filter template-filter" id="templateToggle">
+      <button data-tpl="play">Play</button>
+      <button data-tpl="nur_ii">Nur – II</button>
+      <button data-tpl="iii_viii" class="active">Class III – VIII</button>
+      <button data-tpl="ixx">Class IX – X</button>
+    </div>
+    <p class="field-hint">Picks which report-card format is used. The list below only shows students from this group, and only this layout prints.</p>
+  </div>
+
+  <div class="card">
+    <h2>2. Import data</h2>
+    <label class="file-drop">
+      <input id="fileInput" type="file" accept=".xlsx,.xls" />
+      <span class="file-drop-icon">📄</span>
+      <span>Click to choose your filled <strong>template.xlsx</strong></span>
+    </label>
+    <div id="statusLine" class="status-line" style="display:none;"></div>
+    <button id="downloadTemplateBtn" class="btn btn-ghost" style="margin-top:10px; flex-direction: column; gap: 0 !important;">⬇ Download blank template <span id="downloadTemplateLabel">Class III – VIII</span></button>
+  </div>
+
+  <div class="card">
+    <h2>3. Class Teacher Signature</h2>
+    <label class="file-drop" style="padding:14px;">
+      <input id="teacherSignInput" type="file" accept="image/*" />
+      <span class="file-drop-icon">✍️</span>
+      <span>Upload &amp; crop teacher's signature</span>
+    </label>
+    <div id="teacherSignPreviewWrap" style="display:none; margin-top:8px; text-align:center;">
+      <img id="teacherSignPreview" style="max-height:44px; border:1px solid #d7dbe0; border-radius:4px; background:#fff; padding:4px;" />
+      <button id="teacherSignRemoveBtn" class="btn btn-ghost" style="margin-top:6px;">Remove</button>
+    </div>
+    <p class="field-hint">Principal's signature is fixed and comes from <code>assets/sign-principal.png</code> — unchanged.</p>
+  </div>
+
+  <div class="card">
+    <h2>4. Academic session</h2>
+    <label class="field-label" for="sessionInput">Session shown on every card</label>
+    <input id="sessionInput" class="text-input" type="text" placeholder="e.g. 2026-2027" />
+    <p class="field-hint">Leave blank to use each student's own "Session" column from the Excel file instead.</p>
+  </div>
+
+  <div class="card">
+    <h2>5. Find students</h2>
+    <input id="searchBox" class="search-box" type="text" placeholder="Search by name or admission no." />
+    <div class="class-filter" id="classFilterButtons"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:12px; color:#5b6470;">Students</span>
+      <span id="countBadge" class="count-badge">0 / 0</span>
+    </div>
+    <ul id="studentList" class="student-list"></ul>
+    <p id="emptyHint" class="empty-hint">No data yet — import an Excel file above to get started.</p>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button id="selectAllBtn" class="btn btn-ghost" style="flex:1;">Select visible</button>
+      <button id="clearBtn" class="btn btn-ghost" style="flex:1;">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>6. Print</h2>
+    <button id="printBtn" class="btn btn-primary" disabled>🖨 Print selected</button>
+    <button id="printAllBtn" class="btn btn-secondary" style="margin-top:8px;" disabled>🖨 Print entire class</button>
+    <p class="empty-hint" style="margin-bottom:0;">Each student prints on its own A4 page. Use your browser's Print dialog to save as PDF instead of printing on paper.</p>
+  </div>
+</aside>
+  <main class="stage" id="stageWrapper">
+    <div class="stage-toolbar no-print">
+      <span class="count">Preview</span>
+    </div>
+    <div id="stage"></div>
+  </main>
+
+</div>
+<div id="cropModal" class="crop-modal no-print" style="display:none;">
+  <div class="crop-box">
+    <h3>Crop signature</h3>
+    <p class="field-hint">Drag a rectangle over the signature, then confirm. Skip dragging to use the whole image.</p>
+    <div class="crop-canvas-wrap">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div class="crop-actions">
+      <button id="cropCancelBtn" class="btn btn-ghost">Cancel</button>
+      <button id="cropConfirmBtn" class="btn btn-primary">Use this crop</button>
+    </div>
+  </div>
+</div>
+<script src="lib/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html> -->
+
 <!-- <!doctype html>
 <html lang="en">
 <head>
@@ -224,7 +333,8 @@
     <h2>1. Class group</h2>
     <div class="class-filter template-filter" id="templateToggle">
       <button data-tpl="play">Play</button>
-      <button data-tpl="nur_ii">Nur – II</button>
+      <button data-tpl="nur_kg">Nur – KG</button>
+      <button data-tpl="first_second">Class I – II</button>
       <button data-tpl="iii_viii" class="active">Class III – VIII</button>
       <button data-tpl="ixx">Class IX – X</button>
     </div>
@@ -253,7 +363,7 @@
       <img id="teacherSignPreview" style="max-height:44px; border:1px solid #d7dbe0; border-radius:4px; background:#fff; padding:4px;" />
       <button id="teacherSignRemoveBtn" class="btn btn-ghost" style="margin-top:6px;">Remove</button>
     </div>
-    <p class="field-hint">Principal's signature is fixed and comes from <code>assets/sign-principal.png</code> — unchanged.</p>
+    <p class="field-hint">Principal's signature is fixed and comes from <code>assets/principal.png</code> — unchanged.</p>
   </div>
 
   <div class="card">

@@ -8,13 +8,27 @@ const GRADE_SCALE_III_VIII = [
   [51, 60, "C1"], [41, 50, "C2"], [33, 40, "D"], [0, 32, "E (Needs improvement)"],
 ];
 
+const GRADE_SCALE_PLAY_SCHOLASTIC = [
+  [81, 100, "A"], [61, 80, "B"], [41, 60, "C"], [33, 40, "D"],
+];
+const GRADE_SCALE_PLAY_COSCHOLASTIC = [
+  [81, 100, "A"], [61, 80, "B"], [41, 60, "C"],
+];
+
+
 function gradeFor(total, scale) {
   if (total === "" || total === null || isNaN(total)) return "";
   const t = Number(total);
   for (const [lo, hi, g] of scale) if (t >= lo && t <= hi) return g;
   return "";
 }
-
+function gradeOrPassThrough(v, scale) {
+  if (v === "" || v === null || v === undefined) return "";
+  const s = String(v).trim();
+  if (s === "-") return "-";
+  if (isNaN(s)) return s; // already a letter grade or remark — leave as-is
+  return gradeFor(s, scale);
+}
 function num(v) {
   const n = parseFloat(v);
   return isNaN(n) ? 0 : n;
@@ -136,13 +150,29 @@ const NUR_PERSONAL_TRAITS = [
 /* Generic N-column grade table (replaces the fixed 2-col assumption of
    miniTableForStudent for these two new formats; miniTableForStudent is
    untouched so IX-X and III-VIII keep working exactly as before). */
-function evalTable(student, items, headerLabel, suffixes, colLabels, paddingClass = "") {
+// function evalTable(student, items, headerLabel, suffixes, colLabels, paddingClass = "") {
+//   const headCells = colLabels.map((c) => `<th>${escapeHtml(c)}</th>`).join("");
+//   const rows = items.map(([key, label]) => {
+//     const cells = suffixes.map((sfx) => `<td class="val ${paddingClass}">${escapeHtml(student[`${key}_${sfx}`])}</td>`).join("");
+//     return `<tr><td class="label ${paddingClass}">${escapeHtml(label)}</td>${cells}</tr>`;
+//   }).join("");
+//   return `<table class="rc-mini">
+//     <tr><th class="label ${paddingClass}">${escapeHtml(headerLabel)}</th>${headCells}</tr>
+//     ${rows}
+//   </table>`;
+// }
+
+function evalTable(student, items, headerLabel, suffixes, colLabels, paddingClass = "", gradeScale = null) {
   const headCells = colLabels.map((c) => `<th>${escapeHtml(c)}</th>`).join("");
   const rows = items.map(([key, label]) => {
-    const cells = suffixes.map((sfx) => `<td class="val ${paddingClass}">${escapeHtml(student[`${key}_${sfx}`])}</td>`).join("");
+    const cells = suffixes.map((sfx) => {
+      const raw = student[`${key}_${sfx}`];
+      const display = gradeScale ? gradeOrPassThrough(raw, gradeScale) : raw;
+      return `<td class="val ${paddingClass}">${escapeHtml(display)}</td>`;
+    }).join("");
     return `<tr><td class="label ${paddingClass}">${escapeHtml(label)}</td>${cells}</tr>`;
   }).join("");
-  return `<table class="rc-mini">
+    return `<table class="rc-mini">
     <tr><th class="label ${paddingClass}">${escapeHtml(headerLabel)}</th>${headCells}</tr>
     ${rows}
   </table>`;
@@ -169,7 +199,7 @@ function buildStudentInfoBasic(student, showPan = true) {
       </div>
       <div class="rc-info-row">
         <div class="field"><span class="lbl">Phone No.</span><span class="val">${escapeHtml(student.PhoneNo)}</span></div>
-        ${showPan ? `<div class="field field-lg"><span class="lbl">PEN No.</span><span class="val">${escapeHtml(student.PENNo)}</span></div>` : `<div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>`}
+        ${showPan ? `<div class="field"><span class="lbl">PEN No.</span><span class="val">${escapeHtml(student.PENNo)}</span></div>` : `<div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>`}
       </div>
       ${showPan ? `
       <div class="rc-info-row">
@@ -595,8 +625,8 @@ function reportCardHtmlIIIVIII(student, session) {
 function scholasticTablePlay(student) {
   const rows = PLAY_SUBJECTS.map(([k, label]) => `<tr>
     <td class="subj-name">${escapeHtml(label)}</td>
-    <td>${escapeHtml(student[`${k}_T1`])}</td>
-    <td>${escapeHtml(student[`${k}_T2`])}</td>
+       <td>${escapeHtml(gradeOrPassThrough(student[`${k}_T1`], GRADE_SCALE_PLAY_SCHOLASTIC))}</td>
+    <td>${escapeHtml(gradeOrPassThrough(student[`${k}_T2`], GRADE_SCALE_PLAY_SCHOLASTIC))}</td>
   </tr>`).join("");
   return `<table class="rc-table">
     <thead>
@@ -621,7 +651,7 @@ function reportCardHtmlPlay(student, session) {
     <div class="rc-two-col">
       <div>
         <p class="rc-section-title">B. ACTIVITIES</p>
-        ${evalTable(student, PLAY_COSCHOLASTIC, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"])}
+        ${evalTable(student, PLAY_COSCHOLASTIC, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"],"", GRADE_SCALE_PLAY_COSCHOLASTIC)}
         <div class="rc-band">ATTENDANCE</div>
         <table class="rc-attendance">
           <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Attendance_T1)}</td></tr>
@@ -630,7 +660,7 @@ function reportCardHtmlPlay(student, session) {
       </div>
       <div>
         <p class="rc-section-title">C. CLASS TEACHER'S EVALUATION</p>
-        ${evalTable(student, PLAY_TEACHER_EVAL, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"])}
+        ${evalTable(student, PLAY_TEACHER_EVAL, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II", ],"", GRADE_SCALE_PLAY_COSCHOLASTIC)}
       </div>
     </div>
     <div class="">
@@ -660,9 +690,9 @@ function scholasticTableNur(student, scholasticGroups) {
         : "";
       return `<tr>${subjCell}
         <td class="subj-sub">${escapeHtml(subLabel)}</td>
-        <td>${escapeHtml(student[`${grp.key}_${subKey}_E1`])}</td>
-        <td>${escapeHtml(student[`${grp.key}_${subKey}_E2`])}</td>
-        <td>${escapeHtml(student[`${grp.key}_${subKey}_E3`])}</td>
+        <td>${escapeHtml(gradeOrPassThrough(student[`${grp.key}_${subKey}_E1`], GRADE_SCALE_PLAY_SCHOLASTIC))}</td>
+        <td>${escapeHtml(gradeOrPassThrough(student[`${grp.key}_${subKey}_E2`], GRADE_SCALE_PLAY_SCHOLASTIC))}</td>
+        <td>${escapeHtml(gradeOrPassThrough(student[`${grp.key}_${subKey}_E3`], GRADE_SCALE_PLAY_SCHOLASTIC))}</td>
       </tr>`;
     })
   ).join("");
@@ -688,7 +718,7 @@ function reportCardHtmlNurBase(student, session, scholasticGroups) {
     <div class="rc-two-col">
       <div>
         <p class="rc-section-title">B. CO-SCHOLASTIC AREA</p>
-        ${evalTable(student, NUR_COSCHOLASTIC, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1")}
+        ${evalTable(student, NUR_COSCHOLASTIC, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1", GRADE_SCALE_PLAY_COSCHOLASTIC)}
          <div class="rc-band">ATTENDANCE</div>
         <table class="rc-attendance">
           <tr><td class="term-label py-3">EVALUATION I</td><td class="py-3">${escapeHtml(student.Attendance_E1)}</td></tr>
@@ -698,7 +728,7 @@ function reportCardHtmlNurBase(student, session, scholasticGroups) {
       </div>
       <div>
         <p class="rc-section-title">C. PERSONAL &amp; SOCIAL TRAITS</p>
-        ${evalTable(student, NUR_PERSONAL_TRAITS, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1")}
+        ${evalTable(student, NUR_PERSONAL_TRAITS, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1", GRADE_SCALE_PLAY_COSCHOLASTIC)}
        
       </div>
     </div>

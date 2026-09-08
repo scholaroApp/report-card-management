@@ -24,6 +24,9 @@ function hasValue(v) {
   return v !== "" && v !== null && v !== undefined && !isNaN(v);
 }
 
+function isDash(v) {
+  return String(v ?? "").trim() === "-";
+}
 function escapeHtml(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -166,7 +169,7 @@ function buildStudentInfoBasic(student, showPan = true) {
       </div>
       <div class="rc-info-row">
         <div class="field"><span class="lbl">Phone No.</span><span class="val">${escapeHtml(student.PhoneNo)}</span></div>
-        ${showPan ? `<div class="field"><span class="lbl">PAN No.</span><span class="val">${escapeHtml(student.PANNo)}</span></div>` : `<div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>`}
+        ${showPan ? `<div class="field field-lg"><span class="lbl">PEN No.</span><span class="val">${escapeHtml(student.PENNo)}</span></div>` : `<div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>`}
       </div>
       ${showPan ? `
       <div class="rc-info-row">
@@ -273,10 +276,10 @@ function buildStudentInfo(student) {
         <div class="field"><span class="lbl">Address</span><span class="val">${escapeHtml(student.Address)}</span></div>
       </div>
       <div class="rc-info-row">
-        <div class="field"><span class="lbl">Height</span><span class="val">${escapeHtml(student.Height)}</span></div>
-        <div class="field"><span class="lbl">Weight</span><span class="val">${escapeHtml(student.Weight)}</span></div>
-        <div class="field"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(student.BloodGroup)}</span></div>
-        <div class="field"><span class="lbl">PAN No.</span><span class="val">${escapeHtml(student.PANNo)}</span></div>
+        <div class="field field-sm"><span class="lbl">Height</span><span class="val">${escapeHtml(student.Height)}</span></div>
+        <div class="field field-sm"><span class="lbl">Weight</span><span class="val">${escapeHtml(student.Weight)}</span></div>
+        <div class="field field-sm"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(student.BloodGroup)}</span></div>
+        <div class="field field-lg"><span class="lbl">PEN No.</span><span class="val">${escapeHtml(student.PENNo)}</span></div>
       </div>
       <div class="rc-info-row">
         <div class="field"><span class="lbl">Vision</span><span class="val">${escapeHtml(student.Vision)}</span></div>
@@ -338,7 +341,7 @@ function buildSignatures() {
 
 /* ---------------- Class IX - X template ---------------- */
 
-const SUBJECTS_IXX = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "Sanskrit", "Vocational Education"];
+const SUBJECTS_IXX = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "Sanskrit", "Vocational Education", "CT & AI", "Additional Subject"];
 const SUBJECT_FIELDS_IXX = ["P1", "A", "P2", "B", "C", "D", "AnnualExam"];
 
 function subjectRowIXX(student, subj) {
@@ -348,10 +351,23 @@ function subjectRowIXX(student, subj) {
   const abcdSum = num(vals.A) + num(vals.B) + num(vals.C) + num(vals.D);
   const computedTotal = abcdSum + num(vals.AnnualExam);
   // If the sheet already supplies a Total for this subject, trust it over
-  // the computed figure - otherwise fall back to calculating it ourselves.
+  // // the computed figure - otherwise fall back to calculating it ourselves.
+  // const totalOverride = student[`${key}_Total`];
+  // const total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
+  // const grade = gradeFor(total, GRADE_SCALE_IXX);
+
+  // A literal "-" in the Total column means "intentionally blank" — shown
+  // as-is on both Total and Grade, skipping calculation entirely.
   const totalOverride = student[`${key}_Total`];
-  const total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
-  const grade = gradeFor(total, GRADE_SCALE_IXX);
+  let total, grade;
+  if (isDash(totalOverride)) {
+    total = "-";
+    grade = "-";
+  } else {
+    total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
+    grade = gradeFor(total, GRADE_SCALE_IXX);
+  }
+
   return `<tr>
     <td class="subj-name">${escapeHtml(subj)}</td>
     <td>${escapeHtml(vals.P1)}</td>
@@ -437,7 +453,7 @@ function reportCardHtmlIXX(student, session) {
 
 /* ---------------- Class III - VIII template ---------------- */
 
-const SUBJECTS_III_VIII = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "General Knowledge", "Moral Education", "Sanskrit", "Art & Craft"];
+const SUBJECTS_III_VIII = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "General Knowledge", "Moral Education", "Sanskrit", "Art & Craft", "Add. Subject"];
 
 function subjectRowIIIVIII(student, subj) {
   const key = subj.replace(/[^A-Za-z]/g, "");
@@ -456,17 +472,27 @@ function subjectRowIIIVIII(student, subj) {
 
   const computedTotalT1 = ut1 + ut2 + nbse1 + attMarks1 + midTerm;
   const computedTotalT2 = ut3 + ut4 + nbse2 + attMarks2 + annualExam;
-  const computedGrandTotal = computedTotalT1 + computedTotalT2;
 
-  // Optional per-subject Total1 / Total2 / GrandTotal columns: if the
-  // uploaded sheet already fills these in, use them as-is. If they're left
-  // blank, calculate them from the component marks as before (now correctly
-  // including attendance).
-  const totalT1 = hasValue(f("Total1")) ? num(f("Total1")) : computedTotalT1;
-  const totalT2 = hasValue(f("Total2")) ? num(f("Total2")) : computedTotalT2;
-  const grandTotal = hasValue(f("GrandTotal")) ? num(f("GrandTotal")) : totalT1 + totalT2;
+  // "-" in Total1/Total2/GrandTotal means intentionally blank: shown as-is,
+  // and contributes 0 to any total that's still being auto-calculated.
+  const total1Raw = f("Total1");
+  const total2Raw = f("Total2");
+  const grandTotalRaw = f("GrandTotal");
 
-  const grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
+  const totalT1 = isDash(total1Raw) ? "-" : (hasValue(total1Raw) ? num(total1Raw) : computedTotalT1);
+  const totalT2 = isDash(total2Raw) ? "-" : (hasValue(total2Raw) ? num(total2Raw) : computedTotalT2);
+
+  let grandTotal, grade;
+  if (isDash(grandTotalRaw)) {
+    grandTotal = "-";
+    grade = "-";
+  } else if (hasValue(grandTotalRaw)) {
+    grandTotal = num(grandTotalRaw);
+    grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
+  } else {
+    grandTotal = (totalT1 === "-" ? 0 : totalT1) + (totalT2 === "-" ? 0 : totalT2);
+    grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
+  }
   return `<tr>
     <td class="subj-name">${escapeHtml(subj)}</td>
     <td>${escapeHtml(f("UT1"))}</td>
@@ -497,8 +523,8 @@ function scholasticTableIIIVIII(student) {
         <th colspan="2" class="overall">CUMULATIVE</th>
       </tr>
       <tr class="col-row">
-        <th>Unit<br>Test 1</th><th>Unit<br>Test 2</th><th>Note book /<br>Subject Enrich.</th><th>Attendance</th><th>Mid<br>Term</th><th>Total<br>Marks</th>
-        <th>Unit<br>Test 3</th><th>Unit<br>Test 4</th><th>Note book /<br>Subject Enrich.</th><th>Attendance</th><th>Annual<br>Exam</th><th>Total<br>Marks</th>
+        <th>Unit<br>Test 1</th><th>Unit<br>Test 2</th><th>Note book /<br>Subject En.</th><th>Attend.</th><th>Mid<br>Term</th><th>Total<br>Marks</th>
+        <th>Unit<br>Test 3</th><th>Unit<br>Test 4</th><th>Note book /<br>Subject En.</th><th>Attend.</th><th>Annual<br>Exam</th><th>Total<br>Marks</th>
         <th>Grand<br>Total<br>(40+60)</th><th>Grade</th>
       </tr>
       <tr class="marks-row">
@@ -1110,8 +1136,8 @@ templateToggle.addEventListener("click", (e) => {
   renderStage();
 });
 
-const STUDENT_FIELDS_FULL = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "PhoneNo", "PANNo", "Address", "Height", "Weight", "BloodGroup", "Vision", "Teeth", "OralHygiene"];
-const STUDENT_FIELDS_BASIC = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "BloodGroup", "PhoneNo", "PANNo", "HeightWeight", "Address"];
+const STUDENT_FIELDS_FULL = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "PhoneNo", "PENNo", "Address", "Height", "Weight", "BloodGroup", "Vision", "Teeth", "OralHygiene"];
+const STUDENT_FIELDS_BASIC = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "BloodGroup", "PhoneNo", "PENNo", "HeightWeight", "Address"];
 
 function templateColumns(key) {
   let cols;

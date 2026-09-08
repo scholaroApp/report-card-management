@@ -1,10 +1,3 @@
-/* P.S.M World School - Report Card Generator
-   Fully offline: reads an .xlsx file client-side (SheetJS, vendored in lib/)
-   and renders print-ready A4 report cards. Supports two formats - Class IX-X
-   and Class III-VIII - sharing the same header/signature/session logic, only
-   one of which is shown/printed at a time via the "Class group" toggle. */
-
-/* ---------------- Shared building blocks ---------------- */
 
 const GRADE_SCALE_IXX = [
   [91, 100, "A1"], [81, 90, "A2"], [71, 80, "B1"], [61, 70, "B2"],
@@ -27,14 +20,17 @@ function num(v) {
   return isNaN(n) ? 0 : n;
 }
 
+function hasValue(v) {
+  return v !== "" && v !== null && v !== undefined && !isNaN(v);
+}
+
 function escapeHtml(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 }
 
-/* Personality / activity lists reused by both formats - only the section
-   titles and which column they sit in differ between templates. */
+
 const PERSONAL_TRAITS = [
   ["Courteousness", "Courteousness"],
   ["Confidence", "Confidence"],
@@ -50,6 +46,10 @@ const WORK_ART_HEALTH = [
   ["ArtEducation", "Art Education (Visual & Performing Art)"],
   ["HealthPhysicalEducation", "Health & Physical Education"],
 ];
+/* IX-X only: "Environmental Education / Individual in Society" goes on the
+   IX-X card only, not on III-VIII, so it's added on top of the shared list
+   rather than being part of it. */
+const WORK_ART_HEALTH_IXX = [...WORK_ART_HEALTH, ["EnvironmentalEducationIndividualSociety", "Environmental Education / Individual in Society"]];
 /* ---------------- Play & Nur–II: grade-entry data (no marks/totals) ---------------- */
 
 const PLAY_SUBJECTS = [
@@ -60,7 +60,7 @@ const PLAY_SUBJECTS = [
 ];
 const PLAY_COSCHOLASTIC = [
   ["Sports", "Sports"], ["StagePerformance", "Stage Performance"],
-  ["Recitation", "Recitation"], ["DanceLevel", "Dance & Level"],
+  ["Recitation", "Recitation"], ["DanceMusic", "Dance & Music"],
 ];
 const PLAY_TEACHER_EVAL = [
   ["Curiosity", "Curiosity"], ["Conduct", "Conduct"], ["Cooperation", "Co-operation"],
@@ -68,32 +68,56 @@ const PLAY_TEACHER_EVAL = [
   ["Expression", "Expression"], ["Neatness", "Neatness"], ["Activity", "Activity"],
 ];
 
-const NUR_SCHOLASTIC = [
-  { subject: "ENGLISH", key: "Eng", items: [
-    ["ReadingSkills", "Reading Skills"], ["PronunciationFluency", "Pronunciation/Fluency"],
-    ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
-    ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
-    ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
-  ]},
-  { subject: "HINDI", key: "Hin", items: [
-    ["ReadingSkills", "Reading Skills"], ["PronunciationFluency", "Pronunciation/Fluency"],
-    ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
-    ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
-    ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
-  ]},
-  { subject: "MATHS", key: "Ma", items: [
-    ["RecognitionNumbersMentalAbility", "Recognition of Numbers/Mental Ability"],
-    ["OralCountingTablesReasoning", "Oral Counting/Tables/Reasoning skills"],
-    ["PreNumberConceptsApplication", "Pre Number Concepts/ application"],
-    ["ConceptRelatedExercise", "Concept Related Exercise"],
-    ["WrittenEvaluation", "Written Evaluation"], ["Assignments", "Assignments"],
-  ]},
-  { subject: "E.V.S", key: "Evs", items: [
+/* English/Hindi/Maths groups are identical on both the Nur-KG and the I-II
+   cards. Reading Skills and Pronunciation/Fluency used to be two separate
+   rows - the principal asked for them combined into a single row with a
+   slash, so there's now one "ReadingPronunciation" row instead of two. */
+const NUR_SCHOLASTIC_BASE = [
+  {
+    subject: "ENGLISH", key: "Eng", items: [
+      ["ReadingPronunciation", "Reading Skills / Pronunciation & Fluency"],
+      ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
+      ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
+      ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
+    ]
+  },
+  {
+    subject: "HINDI", key: "Hin", items: [
+      ["ReadingPronunciation", "Reading Skills / Pronunciation & Fluency"],
+      ["WritingSkillHandwritingDictation", "Writing Skill Handwriting/Dictation"],
+      ["PoemRecitationLiterature", "Poem Recitation/ Literature & speaking skills"],
+      ["WritingEvaluation", "Writing Evaluation"], ["Assignments", "Assignments"],
+    ]
+  },
+  {
+    subject: "MATHS", key: "Ma", items: [
+      ["RecognitionNumbersMentalAbility", "Recognition of Numbers/Mental Ability"],
+      ["OralCountingTablesReasoning", "Oral Counting/Tables/Reasoning skills"],
+      ["PreNumberConceptsApplication", "Pre Number Concepts/ application"],
+      ["ConceptRelatedExercise", "Concept Related Exercise"],
+      ["WrittenEvaluation", "Written Evaluation"], ["Assignments", "Assignments"],
+    ]
+  },
+];
+/* Class I-II keeps E.V.S exactly as before. */
+const EVS_GROUP = {
+  subject: "E.V.S", key: "Evs", items: [
     ["EnvironmentSensitivity", "Environment Sensitivity"], ["GroupDiscussions", "Group Discussions"],
     ["ConceptualUnderstanding", "Conceptual Understanding"],
     ["Assignments", "Assignments"], ["WrittenEvaluation", "Written Evaluation"],
-  ]},
-];
+  ]
+};
+/* Nur-KG replaces E.V.S with DRAWING and its three sub-sections. */
+const DRAWING_GROUP = {
+  subject: "DRAWING", key: "Draw", items: [
+    ["EnjoysColouringDrawing", "Enjoys Colouring & Drawing"],
+    ["ArtCraft", "Art & Craft"],
+    ["Origami", "Origami"],
+  ]
+};
+const NUR_SCHOLASTIC_NUR_KG = [...NUR_SCHOLASTIC_BASE, DRAWING_GROUP];
+const NUR_SCHOLASTIC_FIRST_SECOND = [...NUR_SCHOLASTIC_BASE, EVS_GROUP];
+
 const NUR_COSCHOLASTIC = [
   ["Computer", "Computer"], ["ArtCraft", "Art & Craft"], ["GeneralKnowledge", "General Knowledge"],
   ["MoralValues", "Moral Values"], ["MusicDance", "Music & Dance"], ["Sports", "Sports"],
@@ -102,7 +126,7 @@ const NUR_PERSONAL_TRAITS = [
   ["Discipline", "Discipline"], ["Confidence", "Confidence"],
   ["RegularityPunctuality", "Regularity & Punctuality"], ["AcceptResponsibility", "Accept Responsibility"],
   ["CleanlinessHygiene", "Cleanliness & Hygiene"], ["RegularityHW", "Regularity in doing H.W"],
-  ["GreetingOther", "Greeting Other"], ["SharersWithOther", "Sharers with Other"],
+  ["GreetingOther", "Greeting Other"], ["SharesWithOther", "Shares with Other"],
   ["FollowInstructions", "Follow Instructions"], ["ParticipateActivities", "Participate in Activities"],
 ];
 
@@ -124,7 +148,7 @@ function evalTable(student, items, headerLabel, suffixes, colLabels, paddingClas
 /* Student-info block without Phone/Vision/Teeth/Oral Hygiene, with a single
    combined Height/Weight field — matches the Play and Nur–II cards exactly.
    buildStudentInfo() (the full version) is untouched for IX-X / III-VIII. */
-function buildStudentInfoBasic(student) {
+function buildStudentInfoBasic(student, showPan = true) {
   return `
     <div class="rc-body-box">
     <div class="rc-info">
@@ -141,8 +165,13 @@ function buildStudentInfoBasic(student) {
         <div class="field"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(student.BloodGroup)}</span></div>
       </div>
       <div class="rc-info-row">
-        <div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>
+        <div class="field"><span class="lbl">Phone No.</span><span class="val">${escapeHtml(student.PhoneNo)}</span></div>
+        ${showPan ? `<div class="field"><span class="lbl">PAN No.</span><span class="val">${escapeHtml(student.PANNo)}</span></div>` : `<div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>`}
       </div>
+      ${showPan ? `
+      <div class="rc-info-row">
+        <div class="field"><span class="lbl">Height(cm)/Weight(kg)</span><span class="val">${escapeHtml(student.HeightWeight)}</span></div>
+      </div>` : ''}
       <div class="rc-info-row address">
         <div class="field"><span class="lbl">Address</span><span class="val">${escapeHtml(student.Address)}</span></div>
       </div>
@@ -247,6 +276,7 @@ function buildStudentInfo(student) {
         <div class="field"><span class="lbl">Height</span><span class="val">${escapeHtml(student.Height)}</span></div>
         <div class="field"><span class="lbl">Weight</span><span class="val">${escapeHtml(student.Weight)}</span></div>
         <div class="field"><span class="lbl">Blood Group</span><span class="val">${escapeHtml(student.BloodGroup)}</span></div>
+        <div class="field"><span class="lbl">PAN No.</span><span class="val">${escapeHtml(student.PANNo)}</span></div>
       </div>
       <div class="rc-info-row">
         <div class="field"><span class="lbl">Vision</span><span class="val">${escapeHtml(student.Vision)}</span></div>
@@ -263,7 +293,7 @@ function buildStudentInfo(student) {
    in either template. If a file is missing, the slot just stays blank
    instead of erroring - the "Sign." caption still prints either way. */
 const SIGN_TEACHER_SRC = "assets/sign-teacher.png";
-const SIGN_PRINCIPAL_SRC = "assets/sign-principal.png";
+const SIGN_PRINCIPAL_SRC = "assets/principal.png";
 
 function signatureImg(src, alt) {
   return `<img class="sign-img" src="${src}" alt="${alt}" onerror="this.style.visibility='hidden'" />`;
@@ -308,7 +338,7 @@ function buildSignatures() {
 
 /* ---------------- Class IX - X template ---------------- */
 
-const SUBJECTS_IXX = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer"];
+const SUBJECTS_IXX = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "Sanskrit", "Vocational Education"];
 const SUBJECT_FIELDS_IXX = ["P1", "A", "P2", "B", "C", "D", "AnnualExam"];
 
 function subjectRowIXX(student, subj) {
@@ -316,7 +346,11 @@ function subjectRowIXX(student, subj) {
   const vals = {};
   SUBJECT_FIELDS_IXX.forEach((f) => (vals[f] = student[`${key}_${f}`]));
   const abcdSum = num(vals.A) + num(vals.B) + num(vals.C) + num(vals.D);
-  const total = abcdSum + num(vals.AnnualExam);
+  const computedTotal = abcdSum + num(vals.AnnualExam);
+  // If the sheet already supplies a Total for this subject, trust it over
+  // the computed figure - otherwise fall back to calculating it ourselves.
+  const totalOverride = student[`${key}_Total`];
+  const total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
   const grade = gradeFor(total, GRADE_SCALE_IXX);
   return `<tr>
     <td class="subj-name">${escapeHtml(subj)}</td>
@@ -333,7 +367,7 @@ function subjectRowIXX(student, subj) {
   </tr>`;
 }
 
-function scholasticTableIXX(student, customClass="") {
+function scholasticTableIXX(student, customClass = "") {
   const rows = SUBJECTS_IXX.map((s) => subjectRowIXX(student, s)).join("");
   return `<table class="rc-table ${customClass}">
     <thead>
@@ -378,7 +412,7 @@ function reportCardHtmlIXX(student, session) {
       </div>
       <div>
         <p class="rc-section-title">HEALTH &amp; PHYSICAL EDUCATION</p>
-        ${miniTableForStudent(student, WORK_ART_HEALTH, "Activities", "T1", "T2", paddingClass = "py-5")}
+        ${miniTableForStudent(student, WORK_ART_HEALTH_IXX, "Activities", "T1", "T2", paddingClass = "py-5")}
         <div class="rc-band">ATTENDANCE</div>
         <table class="rc-attendance">
           <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Attendance_T1)}</td></tr>
@@ -403,29 +437,48 @@ function reportCardHtmlIXX(student, session) {
 
 /* ---------------- Class III - VIII template ---------------- */
 
-const SUBJECTS_III_VIII = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "General Knowledge", "Art & Craft"];
+const SUBJECTS_III_VIII = ["English", "Hindi", "Mathematics", "Science", "Social Science", "Computer", "General Knowledge", "Moral Education", "Sanskrit", "Art & Craft"];
 
 function subjectRowIIIVIII(student, subj) {
   const key = subj.replace(/[^A-Za-z]/g, "");
   const f = (name) => student[`${key}_${name}`];
-  const ut1 = num(f("UT1")), ut2 = num(f("UT2")), nb1 = num(f("NB1")), se1 = num(f("SE1")), midTerm = num(f("MidTerm"));
-  const ut3 = num(f("UT3")), ut4 = num(f("UT4")), nb2 = num(f("NB2")), se2 = num(f("SE2")), annualExam = num(f("AnnualExam"));
-  const totalT1 = ut1 + ut2 + nb1 + se1 + midTerm;
-  const totalT2 = ut3 + ut4 + nb2 + se2 + annualExam;
-  const grandTotal = totalT1 + totalT2;
+  const ut1 = num(f("UT1")), ut2 = num(f("UT2")), nbse1 = num(f("NBSE1")), midTerm = num(f("MidTerm"));
+  const ut3 = num(f("UT3")), ut4 = num(f("UT4")), nbse2 = num(f("NBSE2")), annualExam = num(f("AnnualExam"));
+
+  // Attendance is worth 5 marks per term (same as the Note book / Subject
+  // Enrichment column) and applies the same way to every subject row, since
+  // it's a student-level figure rather than a per-subject one. It's read
+  // from a dedicated *marks* field (0-5) rather than the Attendance_T1/T2
+  // field, which keeps showing the raw attendance record (days/percentage)
+  // in its own column without that record itself being added into totals.
+  const attMarks1 = num(student.AttendanceMarks_T1);
+  const attMarks2 = num(student.AttendanceMarks_T2);
+
+  const computedTotalT1 = ut1 + ut2 + nbse1 + attMarks1 + midTerm;
+  const computedTotalT2 = ut3 + ut4 + nbse2 + attMarks2 + annualExam;
+  const computedGrandTotal = computedTotalT1 + computedTotalT2;
+
+  // Optional per-subject Total1 / Total2 / GrandTotal columns: if the
+  // uploaded sheet already fills these in, use them as-is. If they're left
+  // blank, calculate them from the component marks as before (now correctly
+  // including attendance).
+  const totalT1 = hasValue(f("Total1")) ? num(f("Total1")) : computedTotalT1;
+  const totalT2 = hasValue(f("Total2")) ? num(f("Total2")) : computedTotalT2;
+  const grandTotal = hasValue(f("GrandTotal")) ? num(f("GrandTotal")) : totalT1 + totalT2;
+
   const grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
   return `<tr>
     <td class="subj-name">${escapeHtml(subj)}</td>
     <td>${escapeHtml(f("UT1"))}</td>
     <td>${escapeHtml(f("UT2"))}</td>
-    <td>${escapeHtml(f("NB1"))}</td>
-    <td>${escapeHtml(f("SE1"))}</td>
+    <td>${escapeHtml(f("NBSE1"))}</td>
+    <td>${escapeHtml(student.AttendanceMarks_T1)}</td>
     <td>${escapeHtml(f("MidTerm"))}</td>
     <td>${totalT1 || ""}</td>
     <td>${escapeHtml(f("UT3"))}</td>
     <td>${escapeHtml(f("UT4"))}</td>
-    <td>${escapeHtml(f("NB2"))}</td>
-    <td>${escapeHtml(f("SE2"))}</td>
+    <td>${escapeHtml(f("NBSE2"))}</td>
+    <td>${escapeHtml(student.AttendanceMarks_T2)}</td>
     <td>${escapeHtml(f("AnnualExam"))}</td>
     <td>${totalT2 || ""}</td>
     <td>${grandTotal || ""}</td>
@@ -441,11 +494,11 @@ function scholasticTableIIIVIII(student) {
         <th rowspan="3">SUBJECTS</th>
         <th colspan="6">TERM 1</th>
         <th colspan="6">TERM 2</th>
-        <th colspan="2" class="overall">OVERALL</th>
+        <th colspan="2" class="overall">CUMULATIVE</th>
       </tr>
       <tr class="col-row">
-        <th>Unit<br>Test 1</th><th>Unit<br>Test 2</th><th>Note<br>Book</th><th>Subject<br>Enrich.</th><th>Mid<br>Term</th><th>Total<br>Marks</th>
-        <th>Unit<br>Test 3</th><th>Unit<br>Test 4</th><th>Note<br>Book</th><th>Subject<br>Enrich.</th><th>Annual<br>Exam</th><th>Total<br>Marks</th>
+        <th>Unit<br>Test 1</th><th>Unit<br>Test 2</th><th>Note book /<br>Subject Enrich.</th><th>Attendance</th><th>Mid<br>Term</th><th>Total<br>Marks</th>
+        <th>Unit<br>Test 3</th><th>Unit<br>Test 4</th><th>Note book /<br>Subject Enrich.</th><th>Attendance</th><th>Annual<br>Exam</th><th>Total<br>Marks</th>
         <th>Grand<br>Total<br>(40+60)</th><th>Grade</th>
       </tr>
       <tr class="marks-row">
@@ -496,11 +549,13 @@ function reportCardHtmlIIIVIII(student, session) {
         ${miniTableForStudent(student, PERSONAL_TRAITS, "ACTIVITIES", "T1", "T2")}
       </div>
     </div>
+    <div class="">
     <div class="rc-band">TEACHER'S REMARK</div>
     <table class="rc-remark">
       <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Remark_T1)}</td></tr>
       <tr><td class="term-label">TERM II</td><td>${escapeHtml(student.Remark_T2)}</td></tr>
     </table>
+    </div>
     </div>
     <div class="rc-footer">
       ${buildSignatures()}
@@ -532,7 +587,7 @@ function reportCardHtmlPlay(student, session) {
   <section class="sheet">
     ${buildHeader(student, cls, session)}
     <div class="rc-body">
-    ${buildStudentInfoBasic(student)}
+    ${buildStudentInfoBasic(student, false)}
     <div>
       <p class="rc-section-title">A. SCHOLASTIC AREA</p>
       ${scholasticTablePlay(student)}
@@ -552,11 +607,13 @@ function reportCardHtmlPlay(student, session) {
         ${evalTable(student, PLAY_TEACHER_EVAL, "ACTIVITIES", ["T1", "T2"], ["TERM I", "TERM II"])}
       </div>
     </div>
+    <div class="">
     <div class="rc-band">TEACHER'S REMARK</div>
     <table class="rc-remark">
       <tr><td class="term-label">TERM I</td><td>${escapeHtml(student.Remark_T1)}</td></tr>
       <tr><td class="term-label">TERM II</td><td>${escapeHtml(student.Remark_T2)}</td></tr>
     </table>
+    </div>
     </div>
     <div class="rc-footer">
       ${buildSignatures()}
@@ -565,10 +622,12 @@ function reportCardHtmlPlay(student, session) {
   </section>`;
 }
 
-/* ---------------- Nur – II template ---------------- */
+/* ---------------- Nur-KG and Class I-II templates ---------------- */
+/* Both share this exact layout - only the scholastic group list differs
+   (DRAWING vs E.V.S. as the 4th subject), so one function renders both. */
 
-function scholasticTableNur(student) {
-  const rows = NUR_SCHOLASTIC.flatMap((grp) =>
+function scholasticTableNur(student, scholasticGroups) {
+  const rows = scholasticGroups.flatMap((grp) =>
     grp.items.map(([subKey, subLabel], idx) => {
       const subjCell = idx === 0
         ? `<td class="subj-name" rowspan="${grp.items.length}">${escapeHtml(grp.subject)}</td>`
@@ -589,7 +648,7 @@ function scholasticTableNur(student) {
   </table>`;
 }
 
-function reportCardHtmlNur(student, session) {
+function reportCardHtmlNurBase(student, session, scholasticGroups) {
   const cls = escapeHtml(student.Class || "");
   return `
   <section class="sheet">
@@ -598,7 +657,7 @@ function reportCardHtmlNur(student, session) {
     ${buildStudentInfoBasic(student)}
     <div>
       <p class="rc-section-title">A. SCHOLASTIC AREA</p>
-      ${scholasticTableNur(student)}
+      ${scholasticTableNur(student, scholasticGroups)}
     </div>
     <div class="rc-two-col">
       <div>
@@ -606,8 +665,9 @@ function reportCardHtmlNur(student, session) {
         ${evalTable(student, NUR_COSCHOLASTIC, "ACTIVITIES", ["E1", "E2", "E3"], ["EVALUATION I", "EVALUATION II", "EVALUATION III"], paddingClass = "py-1")}
          <div class="rc-band">ATTENDANCE</div>
         <table class="rc-attendance">
-          <tr><td class="term-label py-3">TERM I</td><td class="py-3">${escapeHtml(student.Attendance_T1)}</td></tr>
-          <tr><td class="term-label py-3">TERM II</td><td class="py-3">${escapeHtml(student.Attendance_T2)}</td></tr>
+          <tr><td class="term-label py-3">EVALUATION I</td><td class="py-3">${escapeHtml(student.Attendance_E1)}</td></tr>
+          <tr><td class="term-label py-3">EVALUATION II</td><td class="py-3">${escapeHtml(student.Attendance_E2)}</td></tr>
+          <tr><td class="term-label py-3">EVALUATION III</td><td class="py-3">${escapeHtml(student.Attendance_E3)}</td></tr>
         </table>
       </div>
       <div>
@@ -632,6 +692,13 @@ function reportCardHtmlNur(student, session) {
   </section>`;
 }
 
+function reportCardHtmlNurKG(student, session) {
+  return reportCardHtmlNurBase(student, session, NUR_SCHOLASTIC_NUR_KG);
+}
+function reportCardHtmlFirstSecond(student, session) {
+  return reportCardHtmlNurBase(student, session, NUR_SCHOLASTIC_FIRST_SECOND);
+}
+
 /* ---------------- Template registry ---------------- */
 
 // const TEMPLATES = {
@@ -648,7 +715,8 @@ function reportCardHtmlNur(student, session) {
 // };
 const TEMPLATES = {
   play: { label: "Play", classes: ["PLAY"], render: reportCardHtmlPlay },
-  nur_ii: { label: "Nur \u2013 II", classes: ["NUR", "LKG", "UKG", "I", "II"], render: reportCardHtmlNur },
+  nur_kg: { label: "Nur \u2013 KG", classes: ["NUR", "LKG", "UKG"], render: reportCardHtmlNurKG },
+  first_second: { label: "Class I \u2013 II", classes: ["I", "II"], render: reportCardHtmlFirstSecond },
   iii_viii: { label: "Class III \u2013 VIII", classes: ["III", "IV", "V", "VI", "VII", "VIII"], render: reportCardHtmlIIIVIII },
   ixx: { label: "Class IX \u2013 X", classes: ["IX", "X"], render: reportCardHtmlIXX },
 };
@@ -775,7 +843,7 @@ function visibleStudents() {
     if (classFilter !== "ALL" && cls !== classFilter) return false;
     if (!q) return true;
     return String(s.Name || "").toLowerCase().includes(q) ||
-           String(s.AdmissionNo || "").toLowerCase().includes(q);
+      String(s.AdmissionNo || "").toLowerCase().includes(q);
   });
 }
 
@@ -817,13 +885,13 @@ clearBtn.addEventListener("click", () => {
   renderStage();
 });
 
-printBtn.addEventListener("click", () => {setPrintTitleForSelection();window.print()});
+printBtn.addEventListener("click", () => { setPrintTitleForSelection(); window.print() });
 printAllBtn.addEventListener("click", () => {
   allStudents.filter((s) => belongsToActiveTemplate(s)).forEach((s) => selectedIds.add(s.__id));
   renderList();
   renderStage();
-  setTimeout(() => {setPrintTitleForSelection();window.print()}, 200);
-}); 
+  setTimeout(() => { setPrintTitleForSelection(); window.print() }, 200);
+});
 
 // ADD (near printBtn/printAllBtn declarations)
 const ORIGINAL_TITLE = document.title;
@@ -1042,8 +1110,8 @@ templateToggle.addEventListener("click", (e) => {
   renderStage();
 });
 
-const STUDENT_FIELDS_FULL = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "PhoneNo", "Address", "Height", "Weight", "BloodGroup", "Vision", "Teeth", "OralHygiene"];
-const STUDENT_FIELDS_BASIC = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "BloodGroup", "HeightWeight", "Address"];
+const STUDENT_FIELDS_FULL = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "PhoneNo", "PANNo", "Address", "Height", "Weight", "BloodGroup", "Vision", "Teeth", "OralHygiene"];
+const STUDENT_FIELDS_BASIC = ["Name", "AdmissionNo", "Class", "Session", "FatherName", "MotherName", "DOB", "BloodGroup", "PhoneNo", "PANNo", "HeightWeight", "Address"];
 
 function templateColumns(key) {
   let cols;
@@ -1052,35 +1120,44 @@ function templateColumns(key) {
     SUBJECTS_IXX.forEach((s) => {
       const k = s.replace(" ", "");
       SUBJECT_FIELDS_IXX.forEach((f) => cols.push(`${k}_${f}`));
+      // Optional: fill this in only if you want to override the calculated total for this subject.
+      cols.push(`${k}_Total`);
     });
     PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
-    WORK_ART_HEALTH.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
+    WORK_ART_HEALTH_IXX.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
     cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
   } else if (key === "iii_viii") {
     cols = [...STUDENT_FIELDS_FULL];
     SUBJECTS_III_VIII.forEach((s) => {
       const k = s.replace(/[^A-Za-z]/g, "");
-      ["UT1", "UT2", "NB1", "SE1", "MidTerm", "UT3", "UT4", "NB2", "SE2", "AnnualExam"].forEach((f) => cols.push(`${k}_${f}`));
+      // Total1 / Total2 / GrandTotal are optional overrides - leave them
+      // blank and they'll be calculated automatically (UT1+UT2+Note book+
+      // Attendance marks+Mid Term, etc.), attendance and note book each
+      // worth 5 marks as shown in the printed header.
+      ["UT1", "UT2", "NBSE1", "MidTerm", "Total1", "UT3", "UT4", "NBSE2", "AnnualExam", "Total2", "GrandTotal"].forEach((f) => cols.push(`${k}_${f}`));
     });
     WORK_ART_HEALTH.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
     PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
-    cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
+    // AttendanceMarks_T1/T2 hold the 0-5 mark that feeds into each subject's
+    // total; Attendance_T1/T2 keep showing the raw attendance record.
+    cols.push("Attendance_T1", "Attendance_T2", "AttendanceMarks_T1", "AttendanceMarks_T2", "Remark_T1", "Remark_T2");
   } else if (key === "play") {
     cols = [...STUDENT_FIELDS_BASIC];
     PLAY_SUBJECTS.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
     PLAY_COSCHOLASTIC.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
     PLAY_TEACHER_EVAL.forEach(([k]) => cols.push(`${k}_T1`, `${k}_T2`));
-   // NEW
+    // NEW
     cols.push("Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
     // cols.push("ExtraCurricular", "Attendance_T1", "Attendance_T2", "Remark_T1", "Remark_T2");
-  } else if (key === "nur_ii") {
+  } else if (key === "nur_kg" || key === "first_second") {
     cols = [...STUDENT_FIELDS_BASIC];
-    NUR_SCHOLASTIC.forEach((grp) => grp.items.forEach(([subKey]) =>
+    const scholasticGroups = key === "nur_kg" ? NUR_SCHOLASTIC_NUR_KG : NUR_SCHOLASTIC_FIRST_SECOND;
+    scholasticGroups.forEach((grp) => grp.items.forEach(([subKey]) =>
       cols.push(`${grp.key}_${subKey}_E1`, `${grp.key}_${subKey}_E2`, `${grp.key}_${subKey}_E3`)
     ));
     NUR_COSCHOLASTIC.forEach(([k]) => cols.push(`${k}_E1`, `${k}_E2`, `${k}_E3`));
     NUR_PERSONAL_TRAITS.forEach(([k]) => cols.push(`${k}_E1`, `${k}_E2`, `${k}_E3`));
-    cols.push("Attendance_T1", "Attendance_T2", "Remark_E1", "Remark_E2", "Remark_E3");
+    cols.push("Attendance_E1", "Attendance_E2", "Attendance_E3", "Remark_E1", "Remark_E2", "Remark_E3");
   }
   return cols;
 }

@@ -298,16 +298,21 @@ body {
 
 .sheet {
   width: 210mm;
-  height: 297mm;
+  min-height: 297mm;
   background: var(--paper);
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
-  padding: 5mm 8mm;
+  padding: 3mm 8mm 11mm;
   font-family: "Times New Roman", Georgia, serif;
   color: #111;
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* was "overflow: hidden" - that silently clipped content whenever a card
+     ran slightly taller than one A4 page (the "bottom is cut off" bug).
+     Visible + min-height means a card that's a touch too tall now spills
+     onto a second sheet instead of losing data. The spacing tightened
+     below keeps that from happening in the normal case. */
+  overflow: visible;
 }
 
 .rc-header {
@@ -315,12 +320,12 @@ body {
   align-items: center;
   gap: 10px;
   border-bottom: 3px solid var(--band-blue);
-  padding: 8px 0;
-  margin: -4mm 0 10px 0;
+  padding: 5px 0;
+  margin: -2mm 0 6px 0;
   /* background: linear-gradient(180deg, #eef4fa 0%, #e3edf6 100%); */
 }
 .rc-header .logo-board {
-  height: 120px;
+  height: 100px;
   width: auto;
   flex: 0 0 auto;
 }
@@ -330,7 +335,7 @@ body {
   min-width: 0;
 }
 .rc-header .school-name {
-  font-size: 35px;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: 0.3px;
   margin: 0 0 2px;
@@ -339,20 +344,20 @@ body {
   white-space: nowrap;
 }
 .rc-header .report-title {
-  font-size: 20px;
-  letter-spacing: 2.5px;
+  font-size: 16px;
+  letter-spacing: 2.2px;
   margin: 0;
   color: var(--header-green);
   font-weight: 700;
 }
 .rc-header .session-line {
-  font-size: 17.5px;
+  font-size: 14px;
   font-weight: 700;
-  margin: 3px 0 0;
+  margin: 2px 0 0;
   color: #333;
 }
 .rc-header .class-line {
-  font-size: 17.5px;
+  font-size: 14px;
   font-weight: 700;
   margin: 1px 0 0;
   color: #333;
@@ -365,7 +370,7 @@ body {
   gap: 4px;
 }
 .rc-header .logo-school {
-  height: 120px;
+  height: 100px;
   width: auto;
 }
 .rc-body .rc-photo-box {
@@ -398,20 +403,20 @@ body {
 }
 
 .rc-info {
-  font-size: 12.5px;
-  margin: 6px 0 4px;
+  font-size: 11.5px;
+  margin: 4px 0 2px;
 }
 .rc-info-row {
   display: flex;
   gap: 18px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .rc-info-row .field {
   flex: 1;
   display: flex;
   gap: 4px;
 
-  padding-bottom: 1px;
+  padding-bottom: 2px;
 }
 .rc-info-row .field .lbl {
   white-space: nowrap;
@@ -428,8 +433,8 @@ body {
 .rc-section-title {
   font-weight: 700;
   text-decoration: underline;
-  font-size: 13px;
-  margin: 8px 0 4px;
+  font-size: 12.5px;
+  margin: 5px 0 3px;
 }
 .rc-body-box {
   display: flex;
@@ -451,7 +456,7 @@ body {
 table.rc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10.8px;
+  font-size: 11px;
   margin-bottom: 8px;
 }
 table.rc-table th,
@@ -484,7 +489,7 @@ table.rc-table thead tr.grp-row th.overall {
 table.rc-table thead tr.col-row th {
   background: var(--col-header-blue);
   color: #16333b;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
 }
 table.rc-table thead tr.marks-row th {
@@ -520,7 +525,7 @@ table.rc-table thead tr.marks-row th {
 table.rc-mini {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10.5px;
+  font-size: 11px;
   margin-bottom: 8px;
 }
 table.rc-mini th,
@@ -556,24 +561,26 @@ table.rc-remark {
   width: 100%;
   border-collapse: collapse;
   font-size: 10.5px;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
 }
 table.rc-attendance td,
 table.rc-remark td {
   border: 1px solid var(--line);
   padding: 4px 6px;
+  vertical-align: top;
 }
 table.rc-attendance td.term-label,
 table.rc-remark td.term-label {
   font-weight: 700;
   width: 16%;
+  white-space: nowrap;
   background: #fafafa;
 }
 
 .rc-footer {
   flex: 0 0 auto;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 6px;
 }
 
 .rc-signatures {
@@ -582,7 +589,7 @@ table.rc-remark td.term-label {
   align-items: flex-end;
   font-weight: 700;
   font-size: 11.5px;
-  margin: 6px 0 10px;
+  margin: 4px 0 6px;
 }
 .rc-signatures .sign-block {
   display: flex;
@@ -700,7 +707,7 @@ table.rc-grading th.row-label {
 table.rc-table td.subj-sub {
   text-align: left;
   padding-left: 8px;
-  font-size: 9px;
+  font-size: 10px;
 }
 table.rc-table td.subj-name[rowspan] {
   vertical-align: middle;
@@ -709,7 +716,7 @@ table.rc-table td.subj-name[rowspan] {
 table.rc-table-nur th,
 table.rc-table-nur td {
   padding: 1.5px 3px;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 /* ================== ADD: blank handwriting box (Play "Extra Curricular Activities") ================== */

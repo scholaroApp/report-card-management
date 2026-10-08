@@ -380,6 +380,7 @@ function subjectRowIXX(student, subj) {
   SUBJECT_FIELDS_IXX.forEach((f) => (vals[f] = student[`${key}_${f}`]));
   const abcdSum = num(vals.A) + num(vals.B) + num(vals.C) + num(vals.D);
   const computedTotal = abcdSum + num(vals.AnnualExam);
+  const hasAllComponentMarks = ["A", "B", "C", "D"].every((field) => hasValue(vals[field]));
 
   // A literal "-" in the Total column means "intentionally blank" — shown
   // as-is on both Total and Grade, skipping calculation entirely.
@@ -411,7 +412,7 @@ function subjectRowIXX(student, subj) {
     <td>${escapeHtml(vals.B)}</td>
     <td>${escapeHtml(vals.C)}</td>
     <td>${escapeHtml(vals.D)}</td>
-    <td>${hasComponentMarks ? abcdSum : ""}</td>
+    <td>${hasAllComponentMarks ? abcdSum : ""}</td>
     <td>${escapeHtml(vals.AnnualExam)}</td>
     <td>${total === "" ? "" : total}</td>
     <td>${grade}</td>

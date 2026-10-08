@@ -380,22 +380,27 @@ function subjectRowIXX(student, subj) {
   SUBJECT_FIELDS_IXX.forEach((f) => (vals[f] = student[`${key}_${f}`]));
   const abcdSum = num(vals.A) + num(vals.B) + num(vals.C) + num(vals.D);
   const computedTotal = abcdSum + num(vals.AnnualExam);
-  // If the sheet already supplies a Total for this subject, trust it over
-  // // the computed figure - otherwise fall back to calculating it ourselves.
-  // const totalOverride = student[`${key}_Total`];
-  // const total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
-  // const grade = gradeFor(total, GRADE_SCALE_IXX);
 
   // A literal "-" in the Total column means "intentionally blank" — shown
   // as-is on both Total and Grade, skipping calculation entirely.
   const totalOverride = student[`${key}_Total`];
+  const hasComponentMarks = ["A", "B", "C", "D"].some((field) => hasValue(vals[field]));
+  const hasMarks = hasComponentMarks || hasValue(vals.AnnualExam);
   let total, grade;
   if (isDash(totalOverride)) {
     total = "-";
     grade = "-";
   } else {
-    total = hasValue(totalOverride) ? num(totalOverride) : computedTotal;
-    grade = gradeFor(total, GRADE_SCALE_IXX);
+    if (hasValue(totalOverride)) {
+      total = num(totalOverride);
+      grade = gradeFor(total, GRADE_SCALE_IXX);
+    } else if (hasMarks) {
+      total = computedTotal;
+      grade = gradeFor(total, GRADE_SCALE_IXX);
+    } else {
+      total = "";
+      grade = "";
+    }
   }
 
   return `<tr>
@@ -406,9 +411,9 @@ function subjectRowIXX(student, subj) {
     <td>${escapeHtml(vals.B)}</td>
     <td>${escapeHtml(vals.C)}</td>
     <td>${escapeHtml(vals.D)}</td>
-    <td>${abcdSum || ""}</td>
+    <td>${hasComponentMarks ? abcdSum : ""}</td>
     <td>${escapeHtml(vals.AnnualExam)}</td>
-    <td>${total || ""}</td>
+    <td>${total === "" ? "" : total}</td>
     <td>${grade}</td>
   </tr>`;
 }

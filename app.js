@@ -513,10 +513,15 @@ function subjectRowIIIVIII(student, subj) {
   const total1Raw = f("Total1");
   const total2Raw = f("Total2");
   const grandTotalRaw = f("GrandTotal");
-  const termFilled = (names) => names.some((n) => hasValue(f(n)));
+  const term1Filled = ["UT1", "UT2", "NBSE1", "MidTerm", "Total1"]
+    .some((n) => hasValue(f(n))) || hasValue(student.AttendanceMarks_T1);
+  const term2Filled = ["UT3", "UT4", "NBSE2", "AnnualExam", "Total2"]
+    .some((n) => hasValue(f(n))) || hasValue(student.AttendanceMarks_T2);
 
-  const totalT1 = isDash(total1Raw) ? "-" : (hasValue(total1Raw) ? num(total1Raw) : computedTotalT1);
-  const totalT2 = isDash(total2Raw) ? "-" : (hasValue(total2Raw) ? num(total2Raw) : computedTotalT2);
+  const totalT1 = isDash(total1Raw) ? "-"
+    : (hasValue(total1Raw) ? num(total1Raw) : (term1Filled ? computedTotalT1 : ""));
+  const totalT2 = isDash(total2Raw) ? "-"
+    : (hasValue(total2Raw) ? num(total2Raw) : (term2Filled ? computedTotalT2 : ""));
 
   let grandTotal, grade;
   if (isDash(grandTotalRaw)) {
@@ -525,7 +530,7 @@ function subjectRowIIIVIII(student, subj) {
   } else if (hasValue(grandTotalRaw)) {
     grandTotal = num(grandTotalRaw);
     grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
-  } else if (!(termFilled(["UT1", "UT2", "NBSE1", "MidTerm", "Total1"]) && termFilled(["UT3", "UT4", "NBSE2", "AnnualExam", "Total2"]))) {
+  } else if (!(term1Filled && term2Filled)) {
     // Final result needs both terms; otherwise a partial total would show FAIL.
     grandTotal = "";
     grade = "";
@@ -540,14 +545,14 @@ function subjectRowIIIVIII(student, subj) {
     <td>${escapeHtml(f("NBSE1"))}</td>
     <td>${escapeHtml(student.AttendanceMarks_T1)}</td>
     <td>${escapeHtml(f("MidTerm"))}</td>
-    <td>${totalT1 || ""}</td>
+    <td>${totalT1 === "" ? "" : totalT1}</td>
     <td>${escapeHtml(f("UT3"))}</td>
     <td>${escapeHtml(f("UT4"))}</td>
     <td>${escapeHtml(f("NBSE2"))}</td>
     <td>${escapeHtml(student.AttendanceMarks_T2)}</td>
     <td>${escapeHtml(f("AnnualExam"))}</td>
-    <td>${totalT2 || ""}</td>
-    <td>${grandTotal || ""}</td>
+    <td>${totalT2 === "" ? "" : totalT2}</td>
+    <td>${grandTotal === "" ? "" : grandTotal}</td>
     <td>${grade}</td>
   </tr>`;
 }

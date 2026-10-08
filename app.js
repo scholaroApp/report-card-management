@@ -514,6 +514,19 @@ function subjectRowIIIVIII(student, subj) {
   const total1Raw = f("Total1");
   const total2Raw = f("Total2");
   const grandTotalRaw = f("GrandTotal");
+
+  // A subject with no UT / Mid Term / Annual Exam marks at all (and no total
+  // entered) isn't applicable for this student: every column is shown as "-"
+  // and it isn't graded. An explicit "-" in GrandTotal does the same.
+  const hasAnyPaperMarks = ["UT1", "UT2", "MidTerm", "UT3", "UT4", "AnnualExam", "Total1", "Total2", "GrandTotal"]
+    .some((n) => hasValue(f(n)));
+  if (isDash(grandTotalRaw) || !hasAnyPaperMarks) {
+    return `<tr>
+    <td class="subj-name">${escapeHtml(subj)}</td>
+    ${"<td>-</td>".repeat(14)}
+  </tr>`;
+  }
+
   const term1Filled = ["UT1", "UT2", "NBSE1", "MidTerm", "Total1"]
     .some((n) => hasValue(f(n))) || hasValue(student.AttendanceMarks_T1);
   const term2Filled = ["UT3", "UT4", "NBSE2", "AnnualExam", "Total2"]
@@ -525,10 +538,7 @@ function subjectRowIIIVIII(student, subj) {
     : (hasValue(total2Raw) ? num(total2Raw) : (term2Filled ? computedTotalT2 : ""));
 
   let grandTotal, grade;
-  if (isDash(grandTotalRaw)) {
-    grandTotal = "-";
-    grade = "-";
-  } else if (hasValue(grandTotalRaw)) {
+  if (hasValue(grandTotalRaw)) {
     grandTotal = num(grandTotalRaw);
     grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
   } else if (!(term1Filled && term2Filled)) {

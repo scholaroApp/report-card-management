@@ -386,7 +386,9 @@ function subjectRowIXX(student, subj) {
   // as-is on both Total and Grade, skipping calculation entirely.
   const totalOverride = student[`${key}_Total`];
   const hasComponentMarks = ["A", "B", "C", "D"].some((field) => hasValue(vals[field]));
-  const hasMarks = hasComponentMarks || hasValue(vals.AnnualExam);
+  // Total and Grade are the final result, so they appear only once the
+  // Annual Exam mark is in; during Term 1 a partial total would show FAIL.
+  const hasMarks = hasValue(vals.AnnualExam);
   let total, grade;
   if (isDash(totalOverride)) {
     total = "-";

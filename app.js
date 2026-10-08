@@ -508,6 +508,7 @@ function subjectRowIIIVIII(student, subj) {
   const total1Raw = f("Total1");
   const total2Raw = f("Total2");
   const grandTotalRaw = f("GrandTotal");
+  const termFilled = (names) => names.some((n) => hasValue(f(n)));
 
   const totalT1 = isDash(total1Raw) ? "-" : (hasValue(total1Raw) ? num(total1Raw) : computedTotalT1);
   const totalT2 = isDash(total2Raw) ? "-" : (hasValue(total2Raw) ? num(total2Raw) : computedTotalT2);
@@ -519,6 +520,10 @@ function subjectRowIIIVIII(student, subj) {
   } else if (hasValue(grandTotalRaw)) {
     grandTotal = num(grandTotalRaw);
     grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
+  } else if (!(termFilled(["UT1", "UT2", "NBSE1", "MidTerm", "Total1"]) && termFilled(["UT3", "UT4", "NBSE2", "AnnualExam", "Total2"]))) {
+    // Final result needs both terms; otherwise a partial total would show FAIL.
+    grandTotal = "";
+    grade = "";
   } else {
     grandTotal = (totalT1 === "-" ? 0 : totalT1) + (totalT2 === "-" ? 0 : totalT2);
     grade = gradeFor(grandTotal, GRADE_SCALE_III_VIII);
